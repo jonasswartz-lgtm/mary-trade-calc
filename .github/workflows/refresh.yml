@@ -32,6 +32,7 @@ jobs:
         shell: bash
         run: python -u scripts/fetch_espn.py 2>&1 | tee data_log.txt
       - name: Encrypt data and assemble site
+        shell: bash
         env:
           SITE_PASSWORD: ${{ secrets.SITE_PASSWORD }}
           ISSUES_TOKEN: ${{ secrets.ISSUES_TOKEN }}
