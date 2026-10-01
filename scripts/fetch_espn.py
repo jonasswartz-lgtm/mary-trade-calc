@@ -162,20 +162,49 @@ def main():
 
     lg = fetch_league()
     if lg and lg.get("teams"):
+        by_id = {p["id"]: p for p in players}
         teams = []
         for t in lg["teams"]:
             name = t.get("name") or f"{t.get('location', '')} {t.get('nickname', '')}".strip()
-            roster = [e.get("playerId") for e in (t.get("roster") or {}).get("entries", [])]
-            teams.append({"id": t.get("id"), "name": name, "roster": roster})
-        mary = next((t["id"] for t in teams if MARY_TEAM_HINT in t["name"].lower()), None)
-        size = sum(
-            v for k, v in (lg.get("settings", {}).get("rosterSettings", {})
-                           .get("lineupSlotCounts", {}) or {}).items()
-        )
+            entries = (t.get("roster") or {}).get("entries", [])
+            teams.append({"id": t.get("id"), "name": name, "entries": entries,
+                          "roster": [e.get("playerId") for e in entries]})
+        mary = next((t for t in teams if MARY_TEAM_HINT in t["name"].lower()), None)
+
+        # Starting lineup slots (drop bench 20 and IR 21); used to score Mary's lineup.
+        counts = (lg.get("settings", {}).get("rosterSettings", {})
+                  .get("lineupSlotCounts", {}) or {})
+        slots = {k: v for k, v in counts.items() if v and int(k) not in (20, 21)}
+        print("lineup slots:", slots)
+
+        if mary:
+            # Make sure every Mary player has a row, even deep bench/IR guys.
+            for e in mary["entries"]:
+                pid = e.get("playerId")
+                if pid in by_id:
+                    continue
+                p = (e.get("playerPoolEntry") or {}).get("player") or {}
+                st = p.get("stats") or []
+                sp = stat(st, 1, 0) or 0.0
+                act = stat(st, 0, 0) or 0.0
+                ros = sp - act if method == "season_minus_actual" else sp
+                row = {"id": pid, "n": p.get("fullName") or f"Player {pid}",
+                       "pos": POS.get(p.get("defaultPositionId"), "?"),
+                       "tm": TEAMS.get(p.get("proTeamId"), "?"),
+                       "inj": p.get("injuryStatus") or "", "own": 0,
+                       "w": round(stat(st, 1, 1, week) or 0.0, 2), "sp": round(sp, 2),
+                       "act": round(act, 2), "ros": round(max(ros, 0.0), 2)}
+                players.append(row)
+                by_id[pid] = row
+                print("added off-list Mary player:", row["n"])
+
         # Publish only Mary's team; the page is public and other rosters aren't needed.
-        out["league"] = {"teams": [t for t in teams if t["id"] == mary],
-                         "maryTeamId": mary, "rosterSize": size or None}
-        print("league teams:", len(teams), "mary team id:", mary)
+        out["league"] = {
+            "teams": [{"id": mary["id"], "name": mary["name"], "roster": mary["roster"]}] if mary else [],
+            "maryTeamId": mary["id"] if mary else None,
+            "slots": slots,
+        }
+        print("league teams:", len(teams), "mary team id:", mary and mary["id"])
 
     if len(players) < 100:
         print("Too few players; refusing to overwrite data.", file=sys.stderr)
