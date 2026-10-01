@@ -91,7 +91,7 @@ footer p{margin:0 0 6px}
 .toast.show{transform:translateX(-50%) translateY(0)}
 .loading{padding:40px 0;color:var(--muted)}
 .gate{position:fixed;inset:0;z-index:20;background:var(--paper);display:flex;align-items:center;justify-content:center;padding:16px}
-.gate[hidden]{display:none}
+.gate[hidden],.gate-card[hidden],.adam-btns[hidden]{display:none}
 .gate-card{background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);padding:28px 22px;max-width:360px;width:100%;text-align:center;display:flex;flex-direction:column;gap:12px}
 .gate-sheep{font-size:44px}
 .gate-card h2{margin:0;font-size:28px;font-weight:800}
@@ -155,6 +155,12 @@ footer p{margin:0 0 6px}
     <button class="btn primary" type="submit">Let me in</button>
     <div class="gate-msg" id="gate-msg" aria-live="polite"></div>
   </form>
+  <div class="gate-card" id="adam" hidden role="alertdialog" aria-labelledby="adam-q">
+    <div class="gate-sheep">🤨</div>
+    <h2 id="adam-q">Wait, is this Adam?</h2>
+    <p>I hate Adam.</p>
+    <div class="adam-btns"><button class="btn primary">No</button> <button class="btn" data-adam="1">…Yes</button></div>
+  </div>
 </div>
 
 <script>
@@ -191,13 +197,23 @@ async function decrypt(blob,pw){
 }
 const WRONG=["Wrong. Mary would never.","Nope. Are you even in this league?","Incorrect. The lamb is unimpressed.","Denied. Try the one the Commissioner texted you."];
 let wrongCount=0;
+function adamCheck(){
+  return new Promise(done=>{
+    $("#gate-form").hidden=true;
+    const a=$("#adam"); a.hidden=false; a.querySelector("button").focus();
+    a.querySelectorAll("button").forEach(b=>b.onclick=()=>{
+      if(b.dataset.adam){ a.querySelector("p").textContent="Ugh. Fine. Come in."; a.querySelector(".adam-btns").hidden=true; setTimeout(done,1400); }
+      else done();
+    });
+  });
+}
 function gate(blob){
   return new Promise(resolve=>{
     const g=$("#gate"), f=$("#gate-form"), i=$("#gate-pw"), m=$("#gate-msg");
     g.hidden=false; i.focus();
     f.onsubmit=async e=>{
       e.preventDefault(); m.textContent="Checking…";
-      try{ const d=await decrypt(blob,i.value); store.set(i.value); g.hidden=true; resolve(d); }
+      try{ const d=await decrypt(blob,i.value); store.set(i.value); m.textContent=""; await adamCheck(); g.hidden=true; resolve(d); }
       catch{ m.textContent=WRONG[wrongCount++%WRONG.length]; i.select(); }
     };
   });
