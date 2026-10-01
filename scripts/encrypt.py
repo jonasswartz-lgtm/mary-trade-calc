@@ -20,7 +20,13 @@ if not pw:
     print("SITE_PASSWORD secret is not set; refusing to publish.", file=sys.stderr)
     sys.exit(1)
 
-plain = open("data/players.json", "rb").read()
+data = json.load(open("data/players.json"))
+# Token for the trade log (GitHub Issues). Only password holders can decrypt it.
+if os.environ.get("ISSUES_TOKEN"):
+    data["logToken"] = os.environ["ISSUES_TOKEN"]
+else:
+    print("ISSUES_TOKEN not set; trade log will be read-only.")
+plain = json.dumps(data, separators=(",", ":")).encode()
 salt, iv = os.urandom(16), os.urandom(12)
 key = PBKDF2HMAC(algorithm=hashes.SHA256(), length=32, salt=salt, iterations=ITER).derive(pw.encode())
 ct = AESGCM(key).encrypt(iv, plain, None)  # ciphertext || 16-byte tag, as WebCrypto expects

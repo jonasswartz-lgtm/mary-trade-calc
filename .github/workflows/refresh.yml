@@ -34,10 +34,11 @@ jobs:
       - name: Encrypt data and assemble site
         env:
           SITE_PASSWORD: ${{ secrets.SITE_PASSWORD }}
+          ISSUES_TOKEN: ${{ secrets.ISSUES_TOKEN }}
         run: |
           pip install -q cryptography
           python scripts/encrypt.py
-          cp index.html _site/
+          cp index.html history.html styles.css common.js _site/
       - name: Save snapshot to data branch
         run: |
           mkdir -p /tmp/snap && cp data_log.txt /tmp/snap/

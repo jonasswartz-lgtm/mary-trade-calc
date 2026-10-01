@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Trade Log · The Mary Desk</title>
+<meta name="description" content="Every trade proposed to Mary through the calculator.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐑</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>The Mary<br><span>Desk</span> 🐑</h1>
+    <p class="dek">Every trade copied to the Commissioner, on the permanent record. Mary forgets nothing. Mary is a spreadsheet.</p>
+  </header>
+  <nav class="nav"><a href="./">Calculator</a><a href="history.html" aria-current="page">Trade log</a></nav>
+  <div class="meta" id="meta">Loading the record…</div>
+
+  <div class="stats" id="stats" hidden></div>
+  <div class="filters" id="filters" hidden>
+    <button data-f="all" aria-pressed="true">All</button>
+    <button data-f="ok" aria-pressed="false">Approved</button>
+    <button data-f="no" aria-pressed="false">Denied</button>
+    <span class="count" id="count"></span>
+  </div>
+  <div class="log" id="log"></div>
+
+  <footer>
+    <p>A trade lands here when someone hits "Copy for the Commissioner." Point totals are frozen at the projections used when it was proposed.</p>
+    <p>Entries are encrypted. Without the league password they're gibberish, which is also how Mary reads the waiver wire.</p>
+  </footer>
+</div>
+<div class="toast" id="toast"></div>
+
+<script src="common.js"></script>
+<script>
+let ALL=[], FILTER="all";
+const anon = "Anonymous 🫥";
+const when = iso => new Date(iso).toLocaleString([], {weekday:"short", month:"short", day:"numeric", hour:"numeric", minute:"2-digit"});
+const tot = (ps,k) => ps.reduce((a,p)=>a+(p[k]||0),0);
+
+function renderStats(){
+  const el=$("#stats"); el.hidden=false;
+  const n=ALL.length, ok=ALL.filter(e=>e.ok);
+  const by={}; ALL.forEach(e=>{const k=e.by||anon; by[k]=(by[k]||0)+1});
+  const top=Object.entries(by).sort((a,b)=>b[1]-a[1])[0];
+  const surgical=ok.slice().sort((a,b)=>Math.min(a.dW,a.dR)-Math.min(b.dW,b.dR))[0];
+  el.innerHTML=`
+    <div class="stat"><div class="lbl">Proposals</div><div class="val">${n}</div><div class="sub">since the log opened</div></div>
+    <div class="stat"><div class="lbl">Approved</div><div class="val">${ok.length}</div><div class="sub">${n?Math.round(ok.length/n*100):0}% got past Mary</div></div>
+    <div class="stat"><div class="lbl">Most desperate GM</div><div class="val txt">${esc(top?top[0]:"—")}</div><div class="sub">${top?`${top[1]} proposal${top[1]>1?"s":""}`:"nobody yet"}</div></div>
+    <div class="stat"><div class="lbl">Most surgical heist</div><div class="val">${surgical?fmt(Math.min(surgical.dW,surgical.dR)):"—"}</div><div class="sub">${surgical?esc(surgical.by||anon):"no approvals yet"}</div></div>`;
+}
+
+function renderLog(){
+  const list = ALL.filter(e => FILTER==="all" || (FILTER==="ok") === e.ok);
+  $("#count").textContent = `${list.length} shown`;
+  const log=$("#log");
+  if(!ALL.length){ log.innerHTML=`<div class="empty">No proposals yet. Mary's inbox is as empty as her trophy case.</div>`; return; }
+  if(!list.length){ log.innerHTML=`<div class="empty">Nothing here. ${FILTER==="ok"?"Mary has said no to everyone. Respect.":"Every single proposal qualified. Suspicious."}</div>`; return; }
+  const pl = p => `<li>${esc(p.n)}<span class="tag">${esc(p.pos)} ${esc(p.tm)}</span></li>`;
+  log.innerHTML = list.map(e => `
+    <article class="entry ${e.ok?"ok":"no"}">
+      <div class="entry-top">
+        <span class="who">${esc(e.by||anon)}</span>
+        <span class="when">${when(e.at)} · Week ${e.wk}</span>
+        <span class="verdict-pill">${e.ok?"Approved":"Denied"}</span>
+      </div>
+      <div class="swap">
+        <div><h4>Mary sends</h4><ul>${e.s.map(pl).join("")}</ul></div>
+        <div class="arrow">⇄</div>
+        <div><h4>Mary receives</h4><ul>${e.r.map(pl).join("")}</ul></div>
+      </div>
+      <div class="entry-foot">
+        <span>Week <b class="${e.dW>0?"pos":"neg"}">${fmt(e.dW)}</b></span>
+        <span>ROS <b class="${e.dR>0?"pos":"neg"}">${fmt(e.dR)}</b></span>
+        <a href="./#s=${e.s.map(p=>p.id).join(".")}&r=${e.r.map(p=>p.id).join(".")}">Rerun with today's numbers →</a>
+      </div>
+      ${e.quip?`<div class="q">“${esc(e.quip)}”</div>`:""}
+    </article>`).join("");
+}
+
+$("#filters").addEventListener("click", e => {
+  const b=e.target.closest("button"); if(!b) return;
+  FILTER=b.dataset.f;
+  document.querySelectorAll("#filters button").forEach(x=>x.setAttribute("aria-pressed", x===b));
+  renderLog();
+});
+
+(async () => {
+  let u;
+  try{ u = await unlock(); }catch{ $("#meta").textContent="Couldn't load. Try refreshing."; return; }
+  try{
+    ALL = await LOG.list(u.data.logToken, u.pw);
+  }catch(e){
+    console.warn(e);
+    $("#meta").textContent = "Couldn't reach the trade log. GitHub may be rate-limiting; try again in a few minutes.";
+    return;
+  }
+  $("#meta").innerHTML = `<span><span class="dot"></span>Loaded ${when(new Date().toISOString())}</span><span>${ALL.length} proposal${ALL.length===1?"":"s"} on record</span>`;
+  $("#filters").hidden=false;
+  renderStats(); renderLog();
+})();
+</script>
+</body>
+</html>
