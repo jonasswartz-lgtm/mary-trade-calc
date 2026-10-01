@@ -37,7 +37,7 @@ jobs:
           ISSUES_TOKEN: ${{ secrets.ISSUES_TOKEN }}
         run: |
           pip install -q cryptography
-          python scripts/encrypt.py
+          python scripts/encrypt.py 2>&1 | tee -a data_log.txt
           cp index.html history.html styles.css common.js _site/
       - name: Save snapshot to data branch
         run: |

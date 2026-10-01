@@ -24,6 +24,7 @@ data = json.load(open("data/players.json"))
 # Token for the trade log (GitHub Issues). Only password holders can decrypt it.
 if os.environ.get("ISSUES_TOKEN"):
     data["logToken"] = os.environ["ISSUES_TOKEN"]
+    print("trade log token: present")
 else:
     print("ISSUES_TOKEN not set; trade log will be read-only.")
 plain = json.dumps(data, separators=(",", ":")).encode()
