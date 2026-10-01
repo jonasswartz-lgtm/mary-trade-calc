@@ -85,6 +85,14 @@ h1 span{color:var(--accent)}
 .btn{all:unset;cursor:pointer;font-weight:600;font-size:14px;border:1.5px solid var(--ink);border-radius:999px;padding:8px 16px}
 .btn.primary{background:var(--ink);color:var(--paper)}
 .btn:disabled{opacity:.4;cursor:default}
+.memo{margin-top:18px;border:1.5px dashed var(--line);border-radius:12px;padding:14px;background:var(--paper)}
+.memo[hidden]{display:none}
+.memo-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.memo h3{margin:0;font-size:16px;font-weight:800}
+.memo label{font-size:13px;color:var(--muted);display:flex;align-items:center;gap:8px}
+.memo input{font:inherit;font-size:16px;padding:6px 10px;border:1.5px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink);outline:none;width:180px}
+.memo input:focus{border-color:var(--ink)}
+.memo pre{margin:0;white-space:pre-wrap;word-break:break-word;font:13px/1.55 "JetBrains Mono",monospace}
 footer{margin-top:30px;color:var(--muted);font-size:13px;border-top:1px solid var(--line);padding-top:14px}
 footer p{margin:0 0 6px}
 .toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(80px);background:var(--ink);color:var(--paper);padding:10px 16px;border-radius:999px;font-size:14px;transition:transform .25s;pointer-events:none}
@@ -133,8 +141,15 @@ footer p{margin:0 0 6px}
     </div>
     <div class="stampline"><div class="stamp idle" id="stamp">Pending</div><div class="quip" id="quip"></div></div>
     <ul class="notes" id="notes"></ul>
+    <div class="memo" id="memo" hidden>
+      <div class="memo-head">
+        <h3>Note to the Commissioner</h3>
+        <label>Proposed by <input id="proposer" placeholder="Your team name" autocomplete="off"></label>
+      </div>
+      <pre id="summary"></pre>
+    </div>
     <div class="actions">
-      <button class="btn primary" id="copy" disabled>Copy text for the league</button>
+      <button class="btn primary" id="copy" disabled>Copy for the Commissioner</button>
       <button class="btn" id="share" disabled>Copy link to this trade</button>
       <button class="btn" id="reset">Clear</button>
     </div>
@@ -318,7 +333,7 @@ function render(){
     [tw,tr].forEach(t=>{t.className="test";t.querySelector(".big").textContent="—";t.querySelector(".calc").textContent=""});
     stamp.className="stamp idle"; stamp.textContent="Pending";
     quip.textContent = (g.length||r.length) ? pick("oneSided",seed) : pick("idle",String(new Date().getHours()));
-    return;
+    renderSummary(); return;
   }
   const show=(t,d,get,give)=>{t.className="test "+(d>0?"pass":"fail");t.querySelector(".big").textContent=fmt(d);t.querySelector(".calc").textContent=`gets ${get.toFixed(1)} − sends ${give.toFixed(1)}`};
   show(tw,dW,sum(r,"w"),sum(g,"w")); show(tr,dR,sum(r,"ros"),sum(g,"ros"));
@@ -343,7 +358,39 @@ function render(){
   if(bye.length) N.push(`${bye.map(p=>p.n).join(", ")} project${bye.length>1?"":"s"} 0 this week (bye or injury). That hurts the weekly test.`);
   if(S.maryRoster){ const notHers=g.filter(id=>!S.maryRoster.has(id)).map(id=>S.byId.get(id)?.n); if(notHers.length) N.push(`${notHers.join(", ")} ${notHers.length>1?"aren't":"isn't"} on Mary's roster. You can't trade what she doesn't have.`); }
   N.forEach(t=>{const li=document.createElement("li");li.textContent=t;notes.appendChild(li)});
+  renderSummary();
 }
+
+/* ---------- commissioner summary ---------- */
+const PROPKEY="maryDeskProposer";
+function summaryText(){
+  const line=id=>{const p=S.byId.get(id);return `  • ${p.n} (${p.pos}, ${p.tm})${p.inj&&p.inj!=="ACTIVE"?` [${p.inj.replace("_"," ")}]`:""}: ${p.w.toFixed(1)} wk / ${p.ros.toFixed(1)} ROS`};
+  const gW=sum(S.gets,"w"), sW=sum(S.gives,"w"), gR=sum(S.gets,"ros"), sR=sum(S.gives,"ros");
+  const dW=gW-sW, dR=gR-sR, ok=dW>0&&dR>0;
+  const who=$("#proposer").value.trim();
+  return [
+    `Mary trade proposal, Week ${S.data.week}`,
+    who?`Proposed by: ${who}`:null,
+    ``,
+    `Mary sends:`, ...S.gives.map(line),
+    `Mary receives:`, ...S.gets.map(line),
+    ``,
+    `This week: Mary gets ${gW.toFixed(1)}, sends ${sW.toFixed(1)} → ${fmt(dW)} ${dW>0?"✅":"❌"}`,
+    `Rest of season: Mary gets ${gR.toFixed(1)}, sends ${sR.toFixed(1)} → ${fmt(dR)} ${dR>0?"✅":"❌"}`,
+    ok?`QUALIFIES. Mary nets positive on both.`:`DOES NOT QUALIFY.`,
+    ``,
+    `Mary Desk says: ${$("#quip").textContent}`,
+    `ESPN PPR projections as of ${new Date(S.data.updated).toLocaleString([],{month:"short",day:"numeric",hour:"numeric",minute:"2-digit"})}`,
+    location.href
+  ].filter(x=>x!==null).join("\n");
+}
+function renderSummary(){
+  const ready=S.gives.length&&S.gets.length;
+  $("#memo").hidden=!ready;
+  if(ready) $("#summary").textContent=summaryText();
+}
+try{ $("#proposer").value=localStorage.getItem(PROPKEY)||"" }catch{}
+$("#proposer").addEventListener("input",e=>{try{localStorage.setItem(PROPKEY,e.target.value)}catch{} renderSummary()});
 
 /* ---------- share ---------- */
 function writeHash(){ history.replaceState(null,"",S.gives.length||S.gets.length?`#s=${S.gives.join(".")}&r=${S.gets.join(".")}`:location.pathname) }
@@ -354,12 +401,7 @@ function readHash(){
 }
 function toast(t){const el=$("#toast");el.textContent=t;el.classList.add("show");setTimeout(()=>el.classList.remove("show"),1800)}
 async function copy(text,msg){try{await navigator.clipboard.writeText(text);toast(msg)}catch{prompt("Copy this:",text)}}
-$("#copy").onclick=()=>{
-  const n=ids=>ids.map(id=>S.byId.get(id)?.n).join(", ");
-  const dW=sum(S.gets,"w")-sum(S.gives,"w"), dR=sum(S.gets,"ros")-sum(S.gives,"ros");
-  const ok=dW>0&&dR>0;
-  copy(`Mary trade check (Wk ${S.data.week}, ESPN PPR)\nMary sends: ${n(S.gives)}\nMary receives: ${n(S.gets)}\nMary nets ${fmt(dW)} this week, ${fmt(dR)} rest of season.\n${ok?"✅ Qualifies":"❌ Does not qualify"} — ${$("#quip").textContent}\n${location.href}`,"Copied. Go start the 24-hour clock.");
-};
+$("#copy").onclick=()=>copy(summaryText(),"Copied. Go start the 24-hour clock.");
 $("#share").onclick=()=>copy(location.href,"Link copied.");
 $("#reset").onclick=()=>{S.gives=[];S.gets=[];writeHash();render()};
 window.addEventListener("hashchange",()=>{readHash();render()});
