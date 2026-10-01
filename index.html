@@ -1,0 +1,306 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>The Mary Desk</title>
+<meta name="description" content="Trade calculator for Mary's auto-managed team.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐑</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#f4efe4; --card:#fffdf8; --ink:#1d1a16; --muted:#6f675b; --line:#d9d0bf;
+  --good:#1f7a4a; --good-bg:#e3f1e7; --bad:#b3261e; --bad-bg:#f7e2df; --accent:#c8451f;
+  --chip:#efe8d9; --shadow:0 1px 0 #d9d0bf, 0 8px 24px -16px rgba(40,30,10,.35);
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --paper:#16140f; --card:#1f1c16; --ink:#f1ead9; --muted:#a59c8a; --line:#3a352a;
+    --good:#5fcf8f; --good-bg:#16301f; --bad:#ff7a6b; --bad-bg:#3a1a16; --accent:#ff8a57;
+    --chip:#2b271f; --shadow:0 1px 0 #3a352a, 0 8px 24px -16px rgba(0,0,0,.6);
+  }
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--paper);color:var(--ink);font:16px/1.45 "Bricolage Grotesque",system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.wrap{max-width:980px;margin:0 auto;padding:28px 16px 64px}
+header{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;border-bottom:3px solid var(--ink);padding-bottom:14px}
+h1{font-weight:800;font-size:clamp(34px,6vw,58px);line-height:.92;margin:0;letter-spacing:-.02em}
+h1 span{color:var(--accent)}
+.dek{max-width:440px;color:var(--muted);font-size:15px;margin:0}
+.dek b{color:var(--ink)}
+.meta{font:12px "JetBrains Mono",monospace;color:var(--muted);margin:10px 0 22px;display:flex;gap:14px;flex-wrap:wrap}
+.meta .dot{width:8px;height:8px;border-radius:50%;background:var(--good);display:inline-block;margin-right:6px;vertical-align:1px}
+.meta .dot.stale{background:var(--bad)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+@media (max-width:720px){.grid{grid-template-columns:1fr}}
+.side{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;box-shadow:var(--shadow);min-width:0}
+.side h2{margin:0 0 2px;font-size:20px;font-weight:800}
+.side .sub{margin:0 0 12px;color:var(--muted);font-size:13px}
+.search{position:relative}
+.search input{width:100%;font:inherit;font-size:16px;padding:11px 12px;border:1.5px solid var(--line);border-radius:10px;background:var(--paper);color:var(--ink);outline:none}
+.search input:focus{border-color:var(--ink)}
+.sugg{position:absolute;z-index:5;left:0;right:0;top:calc(100% + 4px);background:var(--card);border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow);overflow:hidden;display:none}
+.sugg.open{display:block}
+.sugg button{all:unset;box-sizing:border-box;width:100%;display:flex;gap:10px;align-items:center;padding:9px 12px;cursor:pointer}
+.sugg button[aria-selected=true],.sugg button:hover{background:var(--chip)}
+.sugg .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sugg .tag,.row .tag{font:600 11px "JetBrains Mono",monospace;color:var(--muted)}
+.sugg .pts{font:12px "JetBrains Mono",monospace;color:var(--muted);white-space:nowrap}
+.sugg .empty{padding:10px 12px;color:var(--muted);font-size:14px}
+.list{margin-top:12px;display:flex;flex-direction:column;gap:8px;min-height:44px}
+.list .none{color:var(--muted);font-size:14px;padding:10px 0;border-top:1px dashed var(--line)}
+.row{display:grid;grid-template-columns:1fr auto auto auto;gap:10px;align-items:center;background:var(--chip);border-radius:10px;padding:9px 10px}
+.row .nm{font-weight:600;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row .inj{color:var(--bad);font:600 11px "JetBrains Mono",monospace;margin-left:6px}
+.row .num{font:13px "JetBrains Mono",monospace;text-align:right;min-width:56px}
+.row .num small{display:block;color:var(--muted);font-size:10px}
+.row .x{all:unset;cursor:pointer;color:var(--muted);font-size:20px;line-height:1;padding:0 4px}
+.row .x:hover{color:var(--bad)}
+.quick{margin-top:12px}
+.quick summary{cursor:pointer;color:var(--muted);font-size:13px}
+.quick .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.quick .chips button{all:unset;cursor:pointer;font-size:13px;background:var(--chip);border-radius:999px;padding:4px 10px}
+.quick .chips button:hover{outline:1.5px solid var(--ink)}
+.verdict{margin-top:22px;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px;box-shadow:var(--shadow);position:relative;overflow:hidden}
+.tests{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width:520px){.tests{grid-template-columns:1fr}}
+.test{border-radius:12px;padding:14px;border:1.5px solid var(--line)}
+.test.pass{background:var(--good-bg);border-color:var(--good)}
+.test.fail{background:var(--bad-bg);border-color:var(--bad)}
+.test .lbl{font-size:13px;color:var(--muted)}
+.test .big{font:600 30px "JetBrains Mono",monospace;letter-spacing:-.02em}
+.test.pass .big{color:var(--good)} .test.fail .big{color:var(--bad)}
+.test .calc{font:12px "JetBrains Mono",monospace;color:var(--muted)}
+.stampline{display:flex;align-items:center;gap:18px;margin-top:18px;flex-wrap:wrap}
+.stamp{font-weight:800;font-size:28px;letter-spacing:.08em;border:4px solid currentColor;border-radius:8px;padding:4px 14px;transform:rotate(-4deg);text-transform:uppercase;flex:none}
+.stamp.pass{color:var(--good)} .stamp.fail{color:var(--bad)} .stamp.idle{color:var(--muted);border-style:dashed}
+.quip{font-size:19px;font-weight:600;flex:1;min-width:220px}
+.notes{margin:14px 0 0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px}
+.notes li{font-size:14px;color:var(--muted);padding-left:18px;position:relative}
+.notes li::before{content:"↳";position:absolute;left:0}
+.actions{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap}
+.btn{all:unset;cursor:pointer;font-weight:600;font-size:14px;border:1.5px solid var(--ink);border-radius:999px;padding:8px 16px}
+.btn.primary{background:var(--ink);color:var(--paper)}
+.btn:disabled{opacity:.4;cursor:default}
+footer{margin-top:30px;color:var(--muted);font-size:13px;border-top:1px solid var(--line);padding-top:14px}
+footer p{margin:0 0 6px}
+.toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(80px);background:var(--ink);color:var(--paper);padding:10px 16px;border-radius:999px;font-size:14px;transition:transform .25s;pointer-events:none}
+.toast.show{transform:translateX(-50%) translateY(0)}
+.loading{padding:40px 0;color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>The Mary<br><span>Desk</span> 🐑</h1>
+    <p class="dek">Mary is on autopilot. A trade with her qualifies only if she nets <b>positive ESPN projected points this week <i>and</i> rest of season</b>. Best qualifying offer in 24 hours wins.</p>
+  </header>
+  <div class="meta" id="meta">Loading projections…</div>
+
+  <div class="grid">
+    <section class="side" id="side-gives">
+      <h2>Mary sends</h2>
+      <p class="sub">Players leaving Mary's roster (you get them)</p>
+      <div class="search"><input id="in-gives" placeholder="Type a player name…" autocomplete="off" aria-label="Add player Mary sends"><div class="sugg" role="listbox"></div></div>
+      <details class="quick" id="quick" hidden><summary>Browse Mary's roster</summary><div class="chips"></div></details>
+      <div class="list" id="list-gives"></div>
+    </section>
+    <section class="side" id="side-gets">
+      <h2>Mary receives</h2>
+      <p class="sub">Players you send to Mary</p>
+      <div class="search"><input id="in-gets" placeholder="Type a player name…" autocomplete="off" aria-label="Add player Mary receives"><div class="sugg" role="listbox"></div></div>
+      <div class="list" id="list-gets"></div>
+    </section>
+  </div>
+
+  <section class="verdict" aria-live="polite">
+    <div class="tests">
+      <div class="test" id="t-week"><div class="lbl">Mary's net, this week</div><div class="big">—</div><div class="calc"></div></div>
+      <div class="test" id="t-ros"><div class="lbl">Mary's net, rest of season</div><div class="big">—</div><div class="calc"></div></div>
+    </div>
+    <div class="stampline"><div class="stamp idle" id="stamp">Pending</div><div class="quip" id="quip"></div></div>
+    <ul class="notes" id="notes"></ul>
+    <div class="actions">
+      <button class="btn primary" id="copy" disabled>Copy text for the league</button>
+      <button class="btn" id="share" disabled>Copy link to this trade</button>
+      <button class="btn" id="reset">Clear</button>
+    </div>
+  </section>
+
+  <footer>
+    <p>Numbers are ESPN's public PPR projections, refreshed every 3 hours. They may differ slightly from the old in-app calculator. The Commissioner's ruling is final, and frankly so is their mood.</p>
+    <p id="foot-ros"></p>
+  </footer>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const S = { data:null, byId:new Map(), gives:[], gets:[], maryRoster:null };
+const $ = s => document.querySelector(s);
+const norm = s => (s||"").normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase().replace(/[^a-z0-9 ]/g,"").replace(/\s+/g," ").trim();
+const fmt = n => (n>0?"+":n<0?"−":"") + Math.abs(n).toFixed(1);
+
+/* ---------- snark ---------- */
+const Q = {
+  idle: ["Mary's waiting. She has nowhere else to be.","Add some players. Mary can't fleece herself.","The lamb is listening."],
+  oneSided: ["A trade has two sides. This has one. That's a donation.","Fill in the other side. Mary doesn't do charity. Or does she?"],
+  passBig: ["Approved. Also: why are you being this generous? Are you okay?","Mary thanks you for your charity. The league questions your judgment.","Approved by a mile. You may have been the mark here."],
+  passNarrow: ["Clears by {m}. Surgical. Disgusting. Approved.","Technically favorable to Mary. The best kind of favorable.","On paper, Mary wins. Paper has never watched a football game.","Approved by {m} points. Arbitrage is just stealing with a spreadsheet."],
+  pass: ["Mary approves. Text the league and start the 24-hour clock.","Positive points for Mary. The spreadsheet gods are satisfied.","Qualifies. Now pray nobody tops it in 24 hours.","Approved. Mary would shake your hand if she had one."],
+  failWeek: ["Great for Mary in December. Mary lives in the now. Denied.","Wins the long game, loses this week. Denied on a technicality you knew about."],
+  failRos: ["Mary wins Sunday, loses the season. Nice try. Denied.","A one-week rental for her whole future. Denied."],
+  failBoth: ["Denied. Mary's on autopilot, not unconscious.","This is a robbery with extra steps.","Mary's attorney has advised her to decline.","Denied. Even the autodraft has standards."],
+  failNarrow: ["Missed by {m}. Throw in a kicker. Everyone does.","So close. Find {m} more points and some shame."]
+};
+function hash(str){let h=2166136261;for(const c of str){h^=c.charCodeAt(0);h=Math.imul(h,16777619)}return h>>>0}
+function pick(key, seed, m){const arr=Q[key];return arr[hash(seed+key)%arr.length].replace("{m}",m)}
+
+/* ---------- data ---------- */
+async function load(){
+  try{
+    const r = await fetch("data/players.json",{cache:"no-store"});
+    S.data = await r.json();
+  }catch(e){ $("#meta").textContent="Couldn't load projections. Try refreshing."; return; }
+  const d=S.data;
+  d.players.forEach(p=>{p.k=norm(p.n); S.byId.set(p.id,p)});
+  const ageH = (Date.now()-new Date(d.updated))/36e5;
+  $("#meta").innerHTML = `<span><span class="dot ${ageH>8?"stale":""}"></span>Updated ${new Date(d.updated).toLocaleString([], {weekday:"short",hour:"numeric",minute:"2-digit"})}</span><span>Week ${d.week}, ${d.season}</span><span>${d.players.length} players</span><span>${d.scoring}</span>`;
+  $("#foot-ros").textContent = d.rosMethod==="season_minus_actual"
+    ? "Rest of season = ESPN season projection minus points already scored."
+    : "Rest of season = ESPN's season projection.";
+  const L=d.league;
+  if(L && L.maryTeamId!=null){
+    const t=L.teams.find(t=>t.id===L.maryTeamId);
+    if(t){ S.maryRoster=new Set(t.roster); renderQuick(t); }
+  }
+  readHash(); render();
+}
+
+function renderQuick(team){
+  const box=$("#quick"); box.hidden=false;
+  box.querySelector("summary").textContent=`Browse ${team.name}'s roster`;
+  const chips=box.querySelector(".chips");
+  team.roster.map(id=>S.byId.get(id)).filter(Boolean).sort((a,b)=>b.ros-a.ros).forEach(p=>{
+    const b=document.createElement("button"); b.textContent=`${p.n} · ${p.pos}`;
+    b.onclick=()=>add("gives",p.id); chips.appendChild(b);
+  });
+}
+
+/* ---------- search ---------- */
+function setupSearch(side){
+  const input=$("#in-"+side), box=input.nextElementSibling; let items=[], sel=0;
+  const close=()=>{box.classList.remove("open")};
+  const draw=()=>{
+    box.innerHTML="";
+    if(!items.length){box.innerHTML=`<div class="empty">No match. ESPN may spell it differently.</div>`;}
+    items.forEach((p,i)=>{
+      const b=document.createElement("button"); b.setAttribute("role","option"); b.setAttribute("aria-selected",i===sel);
+      b.innerHTML=`<span class="nm"></span><span class="tag">${p.pos} ${p.tm}</span><span class="pts">${p.w.toFixed(1)} / ${p.ros.toFixed(0)}</span>`;
+      b.querySelector(".nm").textContent=p.n;
+      b.onmousedown=e=>{e.preventDefault(); choose(p)}; box.appendChild(b);
+    });
+    box.classList.add("open");
+  };
+  const choose=p=>{add(side,p.id); input.value=""; close(); input.focus()};
+  input.addEventListener("input",()=>{
+    const q=norm(input.value); if(!q||!S.data){close();return}
+    const taken=new Set([...S.gives,...S.gets]);
+    let pool=S.data.players.filter(p=>!taken.has(p.id));
+    if(side==="gives"&&S.maryRoster) pool.sort((a,b)=>(S.maryRoster.has(b.id)-S.maryRoster.has(a.id)));
+    const starts=[], has=[];
+    for(const p of pool){ const i=p.k.indexOf(q); if(i<0)continue; (i===0||p.k[i-1]===" "?starts:has).push(p); if(starts.length>=8)break; }
+    items=[...starts,...has].slice(0,8); sel=0; draw();
+  });
+  input.addEventListener("keydown",e=>{
+    if(!box.classList.contains("open")||!items.length)return;
+    if(e.key==="ArrowDown"){sel=(sel+1)%items.length;draw();e.preventDefault()}
+    else if(e.key==="ArrowUp"){sel=(sel-1+items.length)%items.length;draw();e.preventDefault()}
+    else if(e.key==="Enter"){choose(items[sel]);e.preventDefault()}
+    else if(e.key==="Escape")close();
+  });
+  input.addEventListener("blur",()=>setTimeout(close,120));
+}
+
+function add(side,id){ if(S.gives.includes(id)||S.gets.includes(id))return; S[side].push(id); writeHash(); render(); }
+function remove(side,id){ S[side]=S[side].filter(x=>x!==id); writeHash(); render(); }
+
+/* ---------- render ---------- */
+function renderList(side){
+  const el=$("#list-"+side); el.innerHTML="";
+  if(!S[side].length){el.innerHTML=`<div class="none">Nobody yet.</div>`;return}
+  S[side].forEach(id=>{
+    const p=S.byId.get(id); if(!p)return;
+    const r=document.createElement("div"); r.className="row";
+    r.innerHTML=`<div class="nm"><span></span>${p.inj&&p.inj!=="ACTIVE"?`<span class="inj">${p.inj.replace("_"," ")}</span>`:""}<div class="tag">${p.pos} · ${p.tm}</div></div>
+      <div class="num">${p.w.toFixed(1)}<small>WK</small></div><div class="num">${p.ros.toFixed(1)}<small>ROS</small></div><button class="x" aria-label="Remove">×</button>`;
+    r.querySelector(".nm span").textContent=p.n;
+    r.querySelector(".x").onclick=()=>remove(side,id); el.appendChild(r);
+  });
+}
+const sum=(ids,k)=>ids.reduce((a,id)=>a+(S.byId.get(id)?.[k]||0),0);
+
+function render(){
+  renderList("gives"); renderList("gets");
+  const g=S.gives, r=S.gets, seed=[...g].sort().join(",")+"|"+[...r].sort().join(",");
+  const dW=sum(r,"w")-sum(g,"w"), dR=sum(r,"ros")-sum(g,"ros");
+  const tw=$("#t-week"), tr=$("#t-ros"), stamp=$("#stamp"), quip=$("#quip"), notes=$("#notes");
+  notes.innerHTML="";
+  const ready=g.length&&r.length;
+  $("#copy").disabled=!ready; $("#share").disabled=!ready;
+  if(!ready){
+    [tw,tr].forEach(t=>{t.className="test";t.querySelector(".big").textContent="—";t.querySelector(".calc").textContent=""});
+    stamp.className="stamp idle"; stamp.textContent="Pending";
+    quip.textContent = (g.length||r.length) ? pick("oneSided",seed) : pick("idle",String(new Date().getHours()));
+    return;
+  }
+  const show=(t,d,get,give)=>{t.className="test "+(d>0?"pass":"fail");t.querySelector(".big").textContent=fmt(d);t.querySelector(".calc").textContent=`gets ${get.toFixed(1)} − sends ${give.toFixed(1)}`};
+  show(tw,dW,sum(r,"w"),sum(g,"w")); show(tr,dR,sum(r,"ros"),sum(g,"ros"));
+  const okW=dW>0, okR=dR>0, ok=okW&&okR;
+  stamp.className="stamp "+(ok?"pass":"fail"); stamp.textContent=ok?"Approved":"Denied";
+  let key;
+  if(ok){ key = (dR<3||dW<0.5)?"passNarrow":(dR>40&&dW>5)?"passBig":"pass"; }
+  else if(!okW&&!okR){ key = (dW>-1.5&&dR>-6)?"failNarrow":"failBoth"; }
+  else key = okW?"failRos":"failWeek";
+  const margin = ok ? Math.min(dW,dR) : Math.max(-Math.min(dW,0), -Math.min(dR,0));
+  quip.textContent=pick(key,seed,margin.toFixed(1));
+
+  // side notes
+  const N=[];
+  const recv=r.map(id=>S.byId.get(id)).filter(Boolean);
+  const bad=recv.filter(p=>/OUT|INJURY_RESERVE|SUSPENSION/.test(p.inj));
+  if(bad.length) N.push(`You're sending Mary ${bad.map(p=>p.n).join(" and ")} (${bad.map(p=>p.inj.replace("_"," ").toLowerCase()).join(", ")}). Bold.`);
+  const ballast=recv.filter(p=>p.pos==="K"||p.pos==="D/ST");
+  if(ballast.length&&ok) N.push(`${ballast.map(p=>p.n).join(", ")} included as ballast. The Commissioner sees you.`);
+  if(r.length>g.length) N.push(`Mary would take on ${r.length-g.length} extra player${r.length-g.length>1?"s":""}. If her roster is full, someone gets dropped.`);
+  const bye=recv.filter(p=>p.w===0&&p.ros>0);
+  if(bye.length) N.push(`${bye.map(p=>p.n).join(", ")} project${bye.length>1?"":"s"} 0 this week (bye or injury). That hurts the weekly test.`);
+  if(S.maryRoster){ const notHers=g.filter(id=>!S.maryRoster.has(id)).map(id=>S.byId.get(id)?.n); if(notHers.length) N.push(`${notHers.join(", ")} ${notHers.length>1?"aren't":"isn't"} on Mary's roster. You can't trade what she doesn't have.`); }
+  N.forEach(t=>{const li=document.createElement("li");li.textContent=t;notes.appendChild(li)});
+}
+
+/* ---------- share ---------- */
+function writeHash(){ history.replaceState(null,"",S.gives.length||S.gets.length?`#s=${S.gives.join(".")}&r=${S.gets.join(".")}`:location.pathname) }
+function readHash(){
+  const h=new URLSearchParams(location.hash.slice(1));
+  const ids=k=>(h.get(k)||"").split(".").map(Number).filter(id=>S.byId.has(id));
+  S.gives=ids("s"); S.gets=ids("r").filter(id=>!S.gives.includes(id));
+}
+function toast(t){const el=$("#toast");el.textContent=t;el.classList.add("show");setTimeout(()=>el.classList.remove("show"),1800)}
+async function copy(text,msg){try{await navigator.clipboard.writeText(text);toast(msg)}catch{prompt("Copy this:",text)}}
+$("#copy").onclick=()=>{
+  const n=ids=>ids.map(id=>S.byId.get(id)?.n).join(", ");
+  const dW=sum(S.gets,"w")-sum(S.gives,"w"), dR=sum(S.gets,"ros")-sum(S.gives,"ros");
+  const ok=dW>0&&dR>0;
+  copy(`Mary trade check (Wk ${S.data.week}, ESPN PPR)\nMary sends: ${n(S.gives)}\nMary receives: ${n(S.gets)}\nMary nets ${fmt(dW)} this week, ${fmt(dR)} rest of season.\n${ok?"✅ Qualifies":"❌ Does not qualify"} — ${$("#quip").textContent}\n${location.href}`,"Copied. Go start the 24-hour clock.");
+};
+$("#share").onclick=()=>copy(location.href,"Link copied.");
+$("#reset").onclick=()=>{S.gives=[];S.gets=[];writeHash();render()};
+window.addEventListener("hashchange",()=>{readHash();render()});
+
+setupSearch("gives"); setupSearch("gets"); load();
+</script>
+</body>
+</html>
