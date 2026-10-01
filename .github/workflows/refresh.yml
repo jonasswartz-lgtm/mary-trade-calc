@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
 
@@ -29,12 +29,25 @@ jobs:
           LEAGUE_ID: "1501218329"
           ESPN_S2: ${{ secrets.ESPN_S2 }}
           SWID: ${{ secrets.SWID }}
-        run: python scripts/fetch_espn.py
+        shell: bash
+        run: python -u scripts/fetch_espn.py 2>&1 | tee data_log.txt
       - name: Assemble site
         run: |
           mkdir -p _site/data
           cp index.html _site/
           cp data/players.json _site/data/
+      - name: Save snapshot to data branch
+        run: |
+          mkdir -p /tmp/snap && cp data/players.json data_log.txt /tmp/snap/
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git fetch origin data || true
+          git checkout --orphan data-tmp
+          git rm -rfq . || true
+          cp /tmp/snap/* .
+          git add players.json data_log.txt
+          git commit -qm "Projection snapshot"
+          git push -f origin data-tmp:data
       - uses: actions/upload-pages-artifact@v3
         with:
           path: _site
