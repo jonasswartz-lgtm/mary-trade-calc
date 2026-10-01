@@ -134,3 +134,5 @@ footer p{margin:0 0 6px}
 .entry .q{margin-top:8px;font-style:italic;color:var(--muted);font-size:14px}
 .empty{padding:40px 16px;text-align:center;color:var(--muted);background:var(--card);border:1.5px dashed var(--line);border-radius:12px}
 [hidden]{display:none !important}
+.row .num.bench{opacity:.45}
+.row .num.bench small{color:var(--bad);opacity:1}

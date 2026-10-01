@@ -15,7 +15,7 @@
 <div class="wrap">
   <header>
     <h1>The Mary<br><span>Desk</span> 🐑</h1>
-    <p class="dek">Mary is on autopilot. A trade with her qualifies only if she nets <b>positive ESPN projected points this week <i>and</i> rest of season</b>. Best qualifying offer in 24 hours wins.</p>
+    <p class="dek">Mary is on autopilot. A trade qualifies only if it improves her <b>projected starting lineup this week <i>and</i> rest of season</b>, with the same number of players each way. Best qualifying offer in 24 hours wins.</p>
   </header>
   <nav class="nav"><a href="./" aria-current="page">Calculator</a><a href="history.html">Trade log</a></nav>
   <div class="meta" id="meta">Loading projections…</div>
@@ -59,6 +59,7 @@
 
   <footer>
     <p>Numbers are ESPN's public PPR projections, refreshed every 3 hours. They may differ slightly from the old in-app calculator. The Commissioner's ruling is final, and frankly so is their mood.</p>
+    <p>Scoring: we build Mary's best possible starting lineup from her roster before and after the trade, using your league's slots (QB, RB, WR, TE, OP, D/ST, K). Only starters count. A player who'd ride her bench adds nothing.</p>
     <p id="foot-ros"></p>
   </footer>
 </div>
@@ -79,6 +80,8 @@ const Q = {
   failWeek: ["Great for Mary in December. Mary lives in the now. Denied.","Wins the long game, loses this week. Denied on a technicality you knew about."],
   failRos: ["Mary wins Sunday, loses the season. Nice try. Denied.","A one-week rental for her whole future. Denied."],
   failBoth: ["Denied. Mary's on autopilot, not unconscious.","This is a robbery with extra steps.","Mary's attorney has advised her to decline.","Denied. Even the autodraft has standards."],
+  uneven: ["{a} for {b}? Mary went to school. Even numbers only.","Trades must be even. Mary can count, barely, but she can count.","Uneven trade. Mary's roster isn't a clown car."],
+  notHers: ["You can't trade Mary players she doesn't have. That's just theft with paperwork.","Those aren't Mary's. Check the roster, champ."],
   failNarrow: ["Missed by {m}. Throw in a kicker. Everyone does.","So close. Find {m} more points and some shame."]
 };
 function hash(str){let h=2166136261;for(const c of str){h^=c.charCodeAt(0);h=Math.imul(h,16777619)}return h>>>0}
@@ -100,6 +103,8 @@ async function load(){
     const t=L.teams.find(t=>t.id===L.maryTeamId);
     if(t){ S.maryRoster=new Set(t.roster); renderQuick(t); }
   }
+  S.slots=(L&&L.slots)||{};
+  S.lineup=!!(S.maryRoster&&Object.keys(S.slots).some(k=>SLOT_POS[k]));
   readHash(); render();
 }
 
@@ -119,7 +124,7 @@ function setupSearch(side){
   const close=()=>{box.classList.remove("open")};
   const draw=()=>{
     box.innerHTML="";
-    if(!items.length){box.innerHTML=`<div class="empty">No match. ESPN may spell it differently.</div>`;}
+    if(!items.length){box.innerHTML=`<div class="empty">${side==="gives"&&S.maryRoster?"Not on Mary's roster.":"No match. ESPN may spell it differently."}</div>`;}
     items.forEach((p,i)=>{
       const b=document.createElement("button"); b.setAttribute("role","option"); b.setAttribute("aria-selected",i===sel);
       b.innerHTML=`<span class="nm"></span><span class="tag">${p.pos} ${p.tm}</span><span class="pts">${p.w.toFixed(1)} / ${p.ros.toFixed(0)}</span>`;
@@ -133,7 +138,8 @@ function setupSearch(side){
     const q=norm(input.value); if(!q||!S.data){close();return}
     const taken=new Set([...S.gives,...S.gets]);
     let pool=S.data.players.filter(p=>!taken.has(p.id));
-    if(side==="gives"&&S.maryRoster) pool.sort((a,b)=>(S.maryRoster.has(b.id)-S.maryRoster.has(a.id)));
+    if(side==="gives"&&S.maryRoster) pool=pool.filter(p=>S.maryRoster.has(p.id));
+    if(side==="gets"&&S.maryRoster) pool=pool.filter(p=>!S.maryRoster.has(p.id));
     const starts=[], has=[];
     for(const p of pool){ const i=p.k.indexOf(q); if(i<0)continue; (i===0||p.k[i-1]===" "?starts:has).push(p); if(starts.length>=8)break; }
     items=[...starts,...has].slice(0,8); sel=0; draw();
@@ -151,38 +157,86 @@ function setupSearch(side){
 function add(side,id){ if(S.gives.includes(id)||S.gets.includes(id))return; S[side].push(id); writeHash(); render(); }
 function remove(side,id){ S[side]=S[side].filter(x=>x!==id); writeHash(); render(); }
 
+/* ---------- scoring: Mary's best starting lineup, before vs after ---------- */
+const SLOT_POS={0:["QB"],1:["QB"],2:["RB"],3:["RB","WR"],4:["WR"],5:["WR","TE"],6:["TE"],7:["QB","RB","WR","TE"],16:["D/ST"],17:["K"],23:["RB","WR","TE"]};
+const sum=(ids,k)=>ids.reduce((a,id)=>a+(S.byId.get(id)?.[k]||0),0);
+function bestLineup(ids,k){
+  const pool=ids.map(id=>S.byId.get(id)).filter(Boolean).sort((a,b)=>b[k]-a[k]);
+  const order=Object.entries(S.slots).map(([s,c])=>[+s,c]).filter(([s])=>SLOT_POS[s]).sort((a,b)=>SLOT_POS[a[0]].length-SLOT_POS[b[0]].length);
+  const used=new Set(); let total=0;
+  for(const [s,c] of order) for(let i=0;i<c;i++){
+    const p=pool.find(p=>!used.has(p.id)&&SLOT_POS[s].includes(p.pos)); if(!p) break;
+    used.add(p.id); total+=p[k];
+  }
+  return {total,starters:used};
+}
+/* Lineup mode when we know Mary's roster and the league's slots; raw totals otherwise. */
+function evaluate(){
+  const g=S.gives, r=S.gets, res={lineup:S.lineup};
+  for(const k of ["w","ros"]){
+    if(S.lineup){
+      const before=[...S.maryRoster], after=before.filter(id=>!g.includes(id)).concat(r);
+      const B=bestLineup(before,k), A=bestLineup(after,k);
+      res[k]={before:B.total, after:A.total, d:A.total-B.total, sb:B.starters, sa:A.starters};
+    }else{
+      const give=sum(g,k), get=sum(r,k);
+      res[k]={before:give, after:get, d:get-give, sb:new Set(g), sa:new Set(r)};
+    }
+  }
+  return res;
+}
+/* Rule checks that make a trade invalid before any math matters. */
+function problems(){
+  const P=[];
+  if(S.gives.length!==S.gets.length) P.push("uneven");
+  if(S.maryRoster && S.gives.some(id=>!S.maryRoster.has(id))) P.push("notHers");
+  return P;
+}
+
 /* ---------- render ---------- */
-function renderList(side){
+function renderList(side,ev){
   const el=$("#list-"+side); el.innerHTML="";
   if(!S[side].length){el.innerHTML=`<div class="none">Nobody yet.</div>`;return}
+  const setW=side==="gives"?ev?.w.sb:ev?.w.sa, setR=side==="gives"?ev?.ros.sb:ev?.ros.sa;
   S[side].forEach(id=>{
     const p=S.byId.get(id); if(!p)return;
+    const bW=S.lineup&&setW&&!setW.has(id), bR=S.lineup&&setR&&!setR.has(id);
     const r=document.createElement("div"); r.className="row";
     r.innerHTML=`<div class="nm"><span></span>${p.inj&&p.inj!=="ACTIVE"?`<span class="inj">${p.inj.replace("_"," ")}</span>`:""}<div class="tag">${p.pos} · ${p.tm}</div></div>
-      <div class="num">${p.w.toFixed(1)}<small>WK</small></div><div class="num">${p.ros.toFixed(1)}<small>ROS</small></div><button class="x" aria-label="Remove">×</button>`;
+      <div class="num ${bW?"bench":""}">${p.w.toFixed(1)}<small>${bW?"BENCH":"WK"}</small></div><div class="num ${bR?"bench":""}">${p.ros.toFixed(1)}<small>${bR?"BENCH":"ROS"}</small></div><button class="x" aria-label="Remove">×</button>`;
     r.querySelector(".nm span").textContent=p.n;
     r.querySelector(".x").onclick=()=>remove(side,id); el.appendChild(r);
   });
 }
-const sum=(ids,k)=>ids.reduce((a,id)=>a+(S.byId.get(id)?.[k]||0),0);
 
 function render(){
-  renderList("gives"); renderList("gets");
   const g=S.gives, r=S.gets, seed=[...g].sort().join(",")+"|"+[...r].sort().join(",");
-  const dW=sum(r,"w")-sum(g,"w"), dR=sum(r,"ros")-sum(g,"ros");
+  const ready=g.length&&r.length, P=ready?problems():[], ev=ready||g.length?evaluate():null;
+  renderList("gives",ev); renderList("gets",ev);
   const tw=$("#t-week"), tr=$("#t-ros"), stamp=$("#stamp"), quip=$("#quip"), notes=$("#notes");
   notes.innerHTML="";
-  const ready=g.length&&r.length;
-  $("#copy").disabled=!ready; $("#share").disabled=!ready;
+  $("#copy").disabled=!ready||P.length>0; $("#share").disabled=!ready;
+  $("#t-week .lbl").textContent=S.lineup?"Mary's starting lineup, this week":"Mary's net, this week";
+  $("#t-ros .lbl").textContent=S.lineup?"Mary's starting lineup, rest of season":"Mary's net, rest of season";
+  const blank=()=>[tw,tr].forEach(t=>{t.className="test";t.querySelector(".big").textContent="—";t.querySelector(".calc").textContent=""});
   if(!ready){
-    [tw,tr].forEach(t=>{t.className="test";t.querySelector(".big").textContent="—";t.querySelector(".calc").textContent=""});
-    stamp.className="stamp idle"; stamp.textContent="Pending";
+    blank(); stamp.className="stamp idle"; stamp.textContent="Pending";
     quip.textContent = (g.length||r.length) ? pick("oneSided",seed) : pick("idle",String(new Date().getHours()));
     renderSummary(); return;
   }
-  const show=(t,d,get,give)=>{t.className="test "+(d>0?"pass":"fail");t.querySelector(".big").textContent=fmt(d);t.querySelector(".calc").textContent=`gets ${get.toFixed(1)} − sends ${give.toFixed(1)}`};
-  show(tw,dW,sum(r,"w"),sum(g,"w")); show(tr,dR,sum(r,"ros"),sum(g,"ros"));
-  const okW=dW>0, okR=dR>0, ok=okW&&okR;
+  if(P.length){
+    blank(); stamp.className="stamp fail"; stamp.textContent="Invalid";
+    quip.textContent = P.includes("uneven") ? pick("uneven",seed).replace("{a}",g.length).replace("{b}",r.length) : pick("notHers",seed);
+    const N=[];
+    if(P.includes("uneven")) N.push(`Trades with Mary must be even: same number of players each way. This is ${g.length} for ${r.length}.`);
+    if(P.includes("notHers")){ const nh=g.filter(id=>!S.maryRoster.has(id)).map(id=>S.byId.get(id)?.n); N.push(`${nh.join(", ")} ${nh.length>1?"aren't":"isn't"} on Mary's roster.`); }
+    N.forEach(t=>{const li=document.createElement("li");li.textContent=t;notes.appendChild(li)});
+    renderSummary(); return;
+  }
+  const show=(t,x)=>{t.className="test "+(x.d>0?"pass":"fail");t.querySelector(".big").textContent=fmt(x.d);
+    t.querySelector(".calc").textContent=S.lineup?`lineup ${x.before.toFixed(1)} → ${x.after.toFixed(1)}`:`gets ${x.after.toFixed(1)} − sends ${x.before.toFixed(1)}`};
+  show(tw,ev.w); show(tr,ev.ros);
+  const dW=ev.w.d, dR=ev.ros.d, okW=dW>0, okR=dR>0, ok=okW&&okR;
   stamp.className="stamp "+(ok?"pass":"fail"); stamp.textContent=ok?"Approved":"Denied";
   let key;
   if(ok){ key = (dR<3||dW<0.5)?"passNarrow":(dR>40&&dW>5)?"passBig":"pass"; }
@@ -196,22 +250,26 @@ function render(){
   const recv=r.map(id=>S.byId.get(id)).filter(Boolean);
   const bad=recv.filter(p=>/OUT|INJURY_RESERVE|SUSPENSION/.test(p.inj));
   if(bad.length) N.push(`You're sending Mary ${bad.map(p=>p.n).join(" and ")} (${bad.map(p=>p.inj.replace("_"," ").toLowerCase()).join(", ")}). Bold.`);
-  const ballast=recv.filter(p=>p.pos==="K"||p.pos==="D/ST");
-  if(ballast.length&&ok) N.push(`${ballast.map(p=>p.n).join(", ")} included as ballast. The Commissioner sees you.`);
-  if(r.length>g.length) N.push(`Mary would take on ${r.length-g.length} extra player${r.length-g.length>1?"s":""}. If her roster is full, someone gets dropped.`);
+  if(S.lineup){
+    const benched=recv.filter(p=>!ev.ros.sa.has(p.id));
+    if(benched.length) N.push(`${benched.map(p=>p.n).join(", ")} wouldn't crack Mary's starting lineup, so ${benched.length>1?"they're":"he's"} worth zero to her on paper.`);
+    const ballast=recv.filter(p=>(p.pos==="K"||p.pos==="D/ST")&&ev.ros.sa.has(p.id));
+    if(ballast.length&&ok) N.push(`${ballast.map(p=>p.n).join(", ")} doing the heavy lifting at ${ballast.map(p=>p.pos).join("/")}. The Commissioner sees you.`);
+  }
   const bye=recv.filter(p=>p.w===0&&p.ros>0);
   if(bye.length) N.push(`${bye.map(p=>p.n).join(", ")} project${bye.length>1?"":"s"} 0 this week (bye or injury). That hurts the weekly test.`);
-  if(S.maryRoster){ const notHers=g.filter(id=>!S.maryRoster.has(id)).map(id=>S.byId.get(id)?.n); if(notHers.length) N.push(`${notHers.join(", ")} ${notHers.length>1?"aren't":"isn't"} on Mary's roster. You can't trade what she doesn't have.`); }
   N.forEach(t=>{const li=document.createElement("li");li.textContent=t;notes.appendChild(li)});
   renderSummary();
 }
 
-/* ---------- commissioner summary ---------- */
+/* ---------- commissioner summary (no snark: this one goes to the Commissioner) ---------- */
 const PROPKEY="maryDeskProposer";
 function summaryText(){
+  const ev=evaluate(), ok=ev.w.d>0&&ev.ros.d>0;
   const line=id=>{const p=S.byId.get(id);return `  • ${p.n} (${p.pos}, ${p.tm})${p.inj&&p.inj!=="ACTIVE"?` [${p.inj.replace("_"," ")}]`:""}: ${p.w.toFixed(1)} wk / ${p.ros.toFixed(1)} ROS`};
-  const gW=sum(S.gets,"w"), sW=sum(S.gives,"w"), gR=sum(S.gets,"ros"), sR=sum(S.gives,"ros");
-  const dW=gW-sW, dR=gR-sR, ok=dW>0&&dR>0;
+  const row=(label,x)=>S.lineup
+    ? `${label}: Mary's starting lineup ${x.before.toFixed(1)} → ${x.after.toFixed(1)} (${fmt(x.d)}) ${x.d>0?"✅":"❌"}`
+    : `${label}: Mary gets ${x.after.toFixed(1)}, sends ${x.before.toFixed(1)} → ${fmt(x.d)} ${x.d>0?"✅":"❌"}`;
   const who=$("#proposer").value.trim();
   return [
     `Mary trade proposal, Week ${S.data.week}`,
@@ -220,17 +278,16 @@ function summaryText(){
     `Mary sends:`, ...S.gives.map(line),
     `Mary receives:`, ...S.gets.map(line),
     ``,
-    `This week: Mary gets ${gW.toFixed(1)}, sends ${sW.toFixed(1)} → ${fmt(dW)} ${dW>0?"✅":"❌"}`,
-    `Rest of season: Mary gets ${gR.toFixed(1)}, sends ${sR.toFixed(1)} → ${fmt(dR)} ${dR>0?"✅":"❌"}`,
+    row("This week",ev.w),
+    row("Rest of season",ev.ros),
     ok?`QUALIFIES. Mary nets positive on both.`:`DOES NOT QUALIFY.`,
     ``,
-    `Mary Desk says: ${$("#quip").textContent}`,
-    `ESPN PPR projections as of ${new Date(S.data.updated).toLocaleString([],{month:"short",day:"numeric",hour:"numeric",minute:"2-digit"})}`,
+    `${S.lineup?"Scored on Mary's best projected starting lineup. ":""}ESPN PPR projections as of ${new Date(S.data.updated).toLocaleString([],{month:"short",day:"numeric",hour:"numeric",minute:"2-digit"})}`,
     location.href
   ].filter(x=>x!==null).join("\n");
 }
 function renderSummary(){
-  const ready=S.gives.length&&S.gets.length;
+  const ready=S.gives.length&&S.gets.length&&!problems().length;
   $("#memo").hidden=!ready;
   if(ready) $("#summary").textContent=summaryText();
 }
@@ -257,8 +314,8 @@ async function logProposal(){
   const sig=[...S.gives].sort()+"|"+[...S.gets].sort()+"|"+by;
   try{ const last=JSON.parse(localStorage.getItem("maryDeskLastLog")||"{}"); if(last.sig===sig&&Date.now()-last.t<30*60e3) return; }catch{}
   const pl=id=>{const p=S.byId.get(id);return {id:p.id,n:p.n,pos:p.pos,tm:p.tm,w:p.w,ros:p.ros,inj:p.inj||""}};
-  const dW=sum(S.gets,"w")-sum(S.gives,"w"), dR=sum(S.gets,"ros")-sum(S.gives,"ros");
-  const entry={wk:S.data.week, by, s:S.gives.map(pl), r:S.gets.map(pl), dW:+dW.toFixed(2), dR:+dR.toFixed(2), ok:dW>0&&dR>0, quip:$("#quip").textContent, asof:S.data.updated};
+  const ev=evaluate(), dW=ev.w.d, dR=ev.ros.d;
+  const entry={wk:S.data.week, by, mode:S.lineup?"lineup":"raw", s:S.gives.map(pl), r:S.gets.map(pl), dW:+dW.toFixed(2), dR:+dR.toFixed(2), ok:dW>0&&dR>0, quip:$("#quip").textContent, asof:S.data.updated};
   try{ await LOG.post(entry,token,S.pw); try{localStorage.setItem("maryDeskLastLog",JSON.stringify({sig,t:Date.now()}))}catch{} setTimeout(()=>toast("Logged in the trade log. It's on the record now."),1900); }
   catch(e){ console.warn(e); }
 }
