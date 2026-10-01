@@ -172,7 +172,9 @@ def main():
             v for k, v in (lg.get("settings", {}).get("rosterSettings", {})
                            .get("lineupSlotCounts", {}) or {}).items()
         )
-        out["league"] = {"teams": teams, "maryTeamId": mary, "rosterSize": size or None}
+        # Publish only Mary's team; the page is public and other rosters aren't needed.
+        out["league"] = {"teams": [t for t in teams if t["id"] == mary],
+                         "maryTeamId": mary, "rosterSize": size or None}
         print("league teams:", len(teams), "mary team id:", mary)
 
     if len(players) < 100:
