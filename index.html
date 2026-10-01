@@ -90,6 +90,16 @@ footer p{margin:0 0 6px}
 .toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(80px);background:var(--ink);color:var(--paper);padding:10px 16px;border-radius:999px;font-size:14px;transition:transform .25s;pointer-events:none}
 .toast.show{transform:translateX(-50%) translateY(0)}
 .loading{padding:40px 0;color:var(--muted)}
+.gate{position:fixed;inset:0;z-index:20;background:var(--paper);display:flex;align-items:center;justify-content:center;padding:16px}
+.gate[hidden]{display:none}
+.gate-card{background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);padding:28px 22px;max-width:360px;width:100%;text-align:center;display:flex;flex-direction:column;gap:12px}
+.gate-sheep{font-size:44px}
+.gate-card h2{margin:0;font-size:28px;font-weight:800}
+.gate-card p{margin:0;color:var(--muted)}
+.gate-card input{font:inherit;font-size:16px;padding:11px 12px;border:1.5px solid var(--line);border-radius:10px;background:var(--paper);color:var(--ink);outline:none;text-align:center}
+.gate-card input:focus{border-color:var(--ink)}
+.gate-card .btn{align-self:center}
+.gate-msg{min-height:1.4em;color:var(--bad);font-weight:600}
 </style>
 </head>
 <body>
@@ -136,6 +146,16 @@ footer p{margin:0 0 6px}
   </footer>
 </div>
 <div class="toast" id="toast"></div>
+<div class="gate" id="gate" hidden>
+  <form class="gate-card" id="gate-form">
+    <div class="gate-sheep">🐑</div>
+    <h2>Members only.</h2>
+    <p>Mary doesn't talk to strangers. Enter the league password.</p>
+    <input id="gate-pw" type="password" autocomplete="current-password" placeholder="Password" aria-label="League password">
+    <button class="btn primary" type="submit">Let me in</button>
+    <div class="gate-msg" id="gate-msg" aria-live="polite"></div>
+  </form>
+</div>
 
 <script>
 const S = { data:null, byId:new Map(), gives:[], gets:[], maryRoster:null };
@@ -159,11 +179,39 @@ function hash(str){let h=2166136261;for(const c of str){h^=c.charCodeAt(0);h=Mat
 function pick(key, seed, m){const arr=Q[key];return arr[hash(seed+key)%arr.length].replace("{m}",m)}
 
 /* ---------- data ---------- */
+/* ---------- password gate ---------- */
+const PWKEY="maryDeskPw";
+const store={get(){try{return localStorage.getItem(PWKEY)}catch{return null}},set(v){try{localStorage.setItem(PWKEY,v)}catch{}},clear(){try{localStorage.removeItem(PWKEY)}catch{}}};
+const unb64=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
+async function decrypt(blob,pw){
+  const base=await crypto.subtle.importKey("raw",new TextEncoder().encode(pw),"PBKDF2",false,["deriveKey"]);
+  const key=await crypto.subtle.deriveKey({name:"PBKDF2",salt:unb64(blob.salt),iterations:blob.iter,hash:"SHA-256"},base,{name:"AES-GCM",length:256},false,["decrypt"]);
+  const pt=await crypto.subtle.decrypt({name:"AES-GCM",iv:unb64(blob.iv)},key,unb64(blob.ct));
+  return JSON.parse(new TextDecoder().decode(pt));
+}
+const WRONG=["Wrong. Mary would never.","Nope. Are you even in this league?","Incorrect. The lamb is unimpressed.","Denied. Try the one the Commissioner texted you."];
+let wrongCount=0;
+function gate(blob){
+  return new Promise(resolve=>{
+    const g=$("#gate"), f=$("#gate-form"), i=$("#gate-pw"), m=$("#gate-msg");
+    g.hidden=false; i.focus();
+    f.onsubmit=async e=>{
+      e.preventDefault(); m.textContent="Checking…";
+      try{ const d=await decrypt(blob,i.value); store.set(i.value); g.hidden=true; resolve(d); }
+      catch{ m.textContent=WRONG[wrongCount++%WRONG.length]; i.select(); }
+    };
+  });
+}
+
 async function load(){
+  let blob;
   try{
-    const r = await fetch("data/players.json",{cache:"no-store"});
-    S.data = await r.json();
+    const r = await fetch("data/players.enc.json",{cache:"no-store"});
+    blob = await r.json();
   }catch(e){ $("#meta").textContent="Couldn't load projections. Try refreshing."; return; }
+  const saved=store.get();
+  if(saved){ try{ S.data=await decrypt(blob,saved) }catch{ store.clear() } }
+  if(!S.data) S.data=await gate(blob);
   const d=S.data;
   d.players.forEach(p=>{p.k=norm(p.n); S.byId.set(p.id,p)});
   const ageH = (Date.now()-new Date(d.updated))/36e5;

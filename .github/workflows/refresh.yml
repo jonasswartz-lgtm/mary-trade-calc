@@ -31,22 +31,24 @@ jobs:
           SWID: ${{ secrets.SWID }}
         shell: bash
         run: python -u scripts/fetch_espn.py 2>&1 | tee data_log.txt
-      - name: Assemble site
+      - name: Encrypt data and assemble site
+        env:
+          SITE_PASSWORD: ${{ secrets.SITE_PASSWORD }}
         run: |
-          mkdir -p _site/data
+          pip install -q cryptography
+          python scripts/encrypt.py
           cp index.html _site/
-          cp data/players.json _site/data/
       - name: Save snapshot to data branch
         run: |
-          mkdir -p /tmp/snap && cp data/players.json data_log.txt /tmp/snap/
+          mkdir -p /tmp/snap && cp data_log.txt /tmp/snap/
           git config user.name "github-actions"
           git config user.email "github-actions@users.noreply.github.com"
           git fetch origin data || true
           git checkout --orphan data-tmp
           git rm -rfq . || true
           cp /tmp/snap/* .
-          git add players.json data_log.txt
-          git commit -qm "Projection snapshot"
+          git add data_log.txt
+          git commit -qm "Fetch log"
           git push -f origin data-tmp:data
       - uses: actions/upload-pages-artifact@v3
         with:
