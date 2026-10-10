@@ -1,0 +1,16 @@
+season 2026 week 5
+players returned: 1052
+ROS check on 40 players: full-style err 3537, remaining-style err 800 -> season_as_is
+   Jahmyr Gibbs season 334.31 actual 116.0 wk 27.0
+   Amon-Ra St. Brown season 246.05 actual 91.3 wk 20.0
+   Josh Allen season 285.47 actual 112.46 wk 19.9
+   Jaxon Smith-Njigba season 265.71 actual 116.66 wk 20.49
+   CeeDee Lamb season 255.28 actual 115.1 wk 19.15
+   Christian McCaffrey season 264.61 actual 74.0 wk 18.72
+   Ja'Marr Chase season 275.62 actual 60.2 wk 21.78
+   Puka Nacua season 272.52 actual 40.1 wk 21.68
+lineup slots: {'0': 1, '2': 2, '4': 2, '6': 1, '7': 1, '16': 1, '17': 1}
+league teams: 8 mary team id: 8
+wrote 649 players
+trade log token: present
+encrypted 80920 bytes
