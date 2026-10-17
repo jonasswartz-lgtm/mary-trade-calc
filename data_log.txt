@@ -1,0 +1,16 @@
+season 2026 week 6
+players returned: 1052
+ROS check on 40 players: full-style err 4152, remaining-style err 817 -> season_as_is
+   Josh Allen season 281.16 actual 142.96 wk 25.11
+   Puka Nacua season 259.87 actual 77.8 wk 22.79
+   Jaxon Smith-Njigba season 240.81 actual 164.86 wk 19.04
+   CeeDee Lamb season 224.16 actual 115.1 wk 18.61
+   Christian McCaffrey season 237.74 actual 91.3 wk 21.22
+   Bijan Robinson season 267.67 actual 121.2 wk 23.0
+   James Cook III season 214.38 actual 89.3 wk 19.28
+   Jonathan Taylor season 210.31 actual 97.4 wk 18.77
+lineup slots: {'0': 1, '2': 2, '4': 2, '6': 1, '7': 1, '16': 1, '17': 1}
+league teams: 8 mary team id: 8
+wrote 657 players
+trade log token: present
+encrypted 81872 bytes
