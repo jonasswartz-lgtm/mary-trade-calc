@@ -42,14 +42,14 @@ jobs:
           cp index.html history.html styles.css common.js _site/
       - name: Save snapshot to data branch
         run: |
-          mkdir -p /tmp/snap && cp data_log.txt /tmp/snap/
+          mkdir -p /tmp/snap && cp data_log.txt _site/data/players.enc.json /tmp/snap/
           git config user.name "github-actions"
           git config user.email "github-actions@users.noreply.github.com"
           git fetch origin data || true
           git checkout --orphan data-tmp
           git rm -rfq . || true
           cp /tmp/snap/* .
-          git add data_log.txt
+          git add data_log.txt players.enc.json
           git commit -qm "Fetch log"
           git push -f origin data-tmp:data
       - uses: actions/upload-pages-artifact@v3
