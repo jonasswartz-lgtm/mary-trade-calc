@@ -15,7 +15,7 @@
 <div class="wrap">
   <header>
     <h1>The Mary<br><span>Desk</span> 🐑</h1>
-    <p class="dek">Mary is on autopilot. A trade qualifies only if it improves her <b>projected starting lineup this week <i>and</i> rest of season</b>, with the same number of players each way. Best qualifying offer in 24 hours wins.</p>
+    <p class="dek">Madame Mary runs this joint on autopilot. Bring her something that improves her <b>starting lineup this week <i>and</i> rest of season</b>, beyond what she'd get free off the wire. Same number of players each way. Best offer in 24 hours wins. Behave.</p>
   </header>
   <nav class="nav"><a href="./" aria-current="page">Calculator</a><a href="history.html">Trade log</a></nav>
   <div class="meta" id="meta">Loading projections…</div>
@@ -58,8 +58,8 @@
   </section>
 
   <footer>
-    <p>Numbers are ESPN's public PPR projections, refreshed every 3 hours. They may differ slightly from the old in-app calculator. The Commissioner's ruling is final, and frankly so is their mood.</p>
-    <p>Scoring: we build Mary's best possible starting lineup from her roster before and after the trade, using your league's slots (QB, RB, WR, TE, OP, D/ST, K). Only starters count. A player who'd ride her bench adds nothing.</p>
+    <p>Numbers are ESPN's public PPR projections, refreshed every 3 hours. Madame's word is law. So is the Commissioner's. Don't test either.</p>
+    <p>Scoring: we build Mary's best starting lineup before and after the trade, using the league's slots (QB, RB, WR, TE, OP, D/ST, K). Her lineup can include the best free agents, as if she'd already worked the waiver wire. So a trade only counts for what it adds beyond what she could get free. Only starters count.</p>
     <p id="foot-ros"></p>
   </footer>
 </div>
@@ -72,17 +72,17 @@ const norm = s => (s||"").normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase().
 
 /* ---------- snark ---------- */
 const Q = {
-  idle: ["Mary's waiting. She has nowhere else to be.","Add some players. Mary can't fleece herself.","The lamb is listening."],
-  oneSided: ["A trade has two sides. This has one. That's a donation.","Fill in the other side. Mary doesn't do charity. Or does she?"],
-  passBig: ["Approved. Also: why are you being this generous? Are you okay?","Mary thanks you for your charity. The league questions your judgment.","Approved by a mile. You may have been the mark here."],
-  passNarrow: ["Clears by {m}. Surgical. Disgusting. Approved.","Technically favorable to Mary. The best kind of favorable.","On paper, Mary wins. Paper has never watched a football game.","Approved by {m} points. Arbitrage is just stealing with a spreadsheet."],
-  pass: ["Mary approves. Text the league and start the 24-hour clock.","Positive points for Mary. The spreadsheet gods are satisfied.","Qualifies. Now pray nobody tops it in 24 hours.","Approved. Mary would shake your hand if she had one."],
-  failWeek: ["Great for Mary in December. Mary lives in the now. Denied.","Wins the long game, loses this week. Denied on a technicality you knew about."],
-  failRos: ["Mary wins Sunday, loses the season. Nice try. Denied.","A one-week rental for her whole future. Denied."],
-  failBoth: ["Denied. Mary's on autopilot, not unconscious.","This is a robbery with extra steps.","Mary's attorney has advised her to decline.","Denied. Even the autodraft has standards."],
-  uneven: ["{a} for {b}? Mary went to school. Even numbers only.","Trades must be even. Mary can count, barely, but she can count.","Uneven trade. Mary's roster isn't a clown car."],
-  notHers: ["You can't trade Mary players she doesn't have. That's just theft with paperwork.","Those aren't Mary's. Check the roster, champ."],
-  failNarrow: ["Missed by {m}. Throw in a kicker. Everyone does.","So close. Find {m} more points and some shame."]
+  idle: ["Well? Don't just stand in my doorway, darling. Put something on the table.","The joint's open, sugar. Show me what you're carrying.","Madame Mary doesn't wait. Except for you. For now."],
+  oneSided: ["One side of a trade? That's not an offer, that's begging. Try again on your knees.","You expect Madame to give without getting? How precious."],
+  passBig: ["Oh, you poor sap. You've overpaid, and I adore you for it. Approved.","Such devotion. I'll take it all, and you'll thank me. Approved.","You came in a big cheese and you're leaving a flat tire. Approved."],
+  passNarrow: ["By {m}? You've cut it close, you wicked thing. Approved, but I'm watching you.","Just barely, darling. I like a man who knows his limits. Approved.","{m} points. Clever. Too clever. Approved, but don't get cocky."],
+  pass: ["Approved. Now run along and tell the boys. Madame is pleased.","You've earned it, sugar. Approved. Don't make me regret it.","Good. Very good. Approved. You may leave the room now.","Madame approves. Go fetch the Commissioner, there's a good boy."],
+  failWeek: ["Promises for December? Madame wants satisfaction now. Denied.","I don't wait for later, darling. Make me happy this week or get out."],
+  failRos: ["One good Sunday and you think you've won me? Cute. Denied.","A fling for the week, ruin for the season. Madame isn't that kind of girl. Denied."],
+  failBoth: ["Denied. Did you think I'd been sampling the bathtub gin?","You insult me, darling. And not in the fun way. Denied.","Out. Out of my speakeasy before I call the dry agents.","Madame is on autopilot, sugar, not asleep at the wheel. Denied."],
+  failNarrow: ["Short by {m}. Come back when you've learned to give properly.","So close, you poor thing. {m} more and I might have let you."],
+  uneven: ["{a} for {b}? Madame counts, darling. Even numbers, or you get the crop.","Uneven? You'd shortchange a lady? On your knees and fix it.","Madame takes exactly what she gives. Even it up, palooka."],
+  notHers: ["Those aren't mine, sugar. You can't sell me my own hooch, let alone someone else's.","Trading players I don't own? The nerve. I love it. Still no."]
 };
 function hash(str){let h=2166136261;for(const c of str){h^=c.charCodeAt(0);h=Math.imul(h,16777619)}return h>>>0}
 function pick(key, seed, m){const arr=Q[key];return arr[hash(seed+key)%arr.length].replace("{m}",m)}
@@ -105,6 +105,7 @@ async function load(){
   }
   S.slots=(L&&L.slots)||{};
   S.lineup=!!(S.maryRoster&&Object.keys(S.slots).some(k=>SLOT_POS[k]));
+  S.faIds=(L&&L.faKnown)?d.players.filter(p=>p.fa).map(p=>p.id):[];
   readHash(); render();
 }
 
@@ -124,7 +125,7 @@ function setupSearch(side){
   const close=()=>{box.classList.remove("open")};
   const draw=()=>{
     box.innerHTML="";
-    if(!items.length){box.innerHTML=`<div class="empty">${side==="gives"&&S.maryRoster?"Not on Mary's roster.":"No match. ESPN may spell it differently."}</div>`;}
+    if(!items.length){box.innerHTML=`<div class="empty">${side==="gives"&&S.maryRoster?"Madame doesn't own him, sugar.":"Never heard of him. Spell it like you mean it."}</div>`;}
     items.forEach((p,i)=>{
       const b=document.createElement("button"); b.setAttribute("role","option"); b.setAttribute("aria-selected",i===sel);
       b.innerHTML=`<span class="nm"></span><span class="tag">${p.pos} ${p.tm}</span><span class="pts">${p.w.toFixed(1)} / ${p.ros.toFixed(0)}</span>`;
@@ -139,7 +140,7 @@ function setupSearch(side){
     const taken=new Set([...S.gives,...S.gets]);
     let pool=S.data.players.filter(p=>!taken.has(p.id));
     if(side==="gives"&&S.maryRoster) pool=pool.filter(p=>S.maryRoster.has(p.id));
-    if(side==="gets"&&S.maryRoster) pool=pool.filter(p=>!S.maryRoster.has(p.id));
+    if(side==="gets"&&S.maryRoster) pool=pool.filter(p=>!S.maryRoster.has(p.id)&&!p.fa);
     const starts=[], has=[];
     for(const p of pool){ const i=p.k.indexOf(q); if(i<0)continue; (i===0||p.k[i-1]===" "?starts:has).push(p); if(starts.length>=8)break; }
     items=[...starts,...has].slice(0,8); sel=0; draw();
@@ -175,7 +176,7 @@ function evaluate(){
   const g=S.gives, r=S.gets, res={lineup:S.lineup};
   for(const k of ["w","ros"]){
     if(S.lineup){
-      const before=[...S.maryRoster], after=before.filter(id=>!g.includes(id)).concat(r);
+      const before=[...S.maryRoster].concat(S.faIds), after=before.filter(id=>!g.includes(id)).concat(r);
       const B=bestLineup(before,k), A=bestLineup(after,k);
       res[k]={before:B.total, after:A.total, d:A.total-B.total, sb:B.starters, sa:A.starters};
     }else{
@@ -196,7 +197,7 @@ function problems(){
 /* ---------- render ---------- */
 function renderList(side,ev){
   const el=$("#list-"+side); el.innerHTML="";
-  if(!S[side].length){el.innerHTML=`<div class="none">Nobody yet.</div>`;return}
+  if(!S[side].length){el.innerHTML=`<div class="none">Empty-handed? How disappointing.</div>`;return}
   const setW=side==="gives"?ev?.w.sb:ev?.w.sa, setR=side==="gives"?ev?.ros.sb:ev?.ros.sa;
   S[side].forEach(id=>{
     const p=S.byId.get(id); if(!p)return;
@@ -225,11 +226,11 @@ function render(){
     renderSummary(); return;
   }
   if(P.length){
-    blank(); stamp.className="stamp fail"; stamp.textContent="Invalid";
+    blank(); stamp.className="stamp fail"; stamp.textContent="Absolutely not";
     quip.textContent = P.includes("uneven") ? pick("uneven",seed).replace("{a}",g.length).replace("{b}",r.length) : pick("notHers",seed);
     const N=[];
-    if(P.includes("uneven")) N.push(`Trades with Mary must be even: same number of players each way. This is ${g.length} for ${r.length}.`);
-    if(P.includes("notHers")){ const nh=g.filter(id=>!S.maryRoster.has(id)).map(id=>S.byId.get(id)?.n); N.push(`${nh.join(", ")} ${nh.length>1?"aren't":"isn't"} on Mary's roster.`); }
+    if(P.includes("uneven")) N.push(`Even trades only, darling. Same number of players each way. You've brought ${g.length} for ${r.length}.`);
+    if(P.includes("notHers")){ const nh=g.filter(id=>!S.maryRoster.has(id)).map(id=>S.byId.get(id)?.n); N.push(`${nh.join(", ")} ${nh.length>1?"aren't":"isn't"} Madame's. Hands off.`); }
     N.forEach(t=>{const li=document.createElement("li");li.textContent=t;notes.appendChild(li)});
     renderSummary(); return;
   }
@@ -249,15 +250,19 @@ function render(){
   const N=[];
   const recv=r.map(id=>S.byId.get(id)).filter(Boolean);
   const bad=recv.filter(p=>/OUT|INJURY_RESERVE|SUSPENSION/.test(p.inj));
-  if(bad.length) N.push(`You're sending Mary ${bad.map(p=>p.n).join(" and ")} (${bad.map(p=>p.inj.replace("_"," ").toLowerCase()).join(", ")}). Bold.`);
+  if(bad.length) N.push(`Damaged goods? ${bad.map(p=>p.n).join(" and ")} (${bad.map(p=>p.inj.replace("_"," ").toLowerCase()).join(", ")}). You've got some nerve, sugar.`);
   if(S.lineup){
     const benched=recv.filter(p=>!ev.ros.sa.has(p.id));
-    if(benched.length) N.push(`${benched.map(p=>p.n).join(", ")} wouldn't crack Mary's starting lineup, so ${benched.length>1?"they're":"he's"} worth zero to her on paper.`);
+    if(benched.length) N.push(`${benched.map(p=>p.n).join(", ")} wouldn't make Madame's lineup. ${benched.length>1?"They're":"He's"} worth nothing to her. Like your excuses.`);
     const ballast=recv.filter(p=>(p.pos==="K"||p.pos==="D/ST")&&ev.ros.sa.has(p.id));
-    if(ballast.length&&ok) N.push(`${ballast.map(p=>p.n).join(", ")} doing the heavy lifting at ${ballast.map(p=>p.pos).join("/")}. The Commissioner sees you.`);
+    if(ballast.length&&ok) N.push(`Sweetening the pot with a ${ballast.map(p=>p.pos).join("/")}? Madame notices. So does the Commissioner.`);
+  }
+  if(S.lineup&&S.faIds.length){
+    const fill=[...ev.ros.sa].map(id=>S.byId.get(id)).filter(p=>p&&p.fa);
+    if(fill.length) N.push(`Madame would start ${fill.map(p=>`${p.n} (${p.pos})`).join(", ")} off the waiver wire for free. Anything you bring has to beat that.`);
   }
   const bye=recv.filter(p=>p.w===0&&p.ros>0);
-  if(bye.length) N.push(`${bye.map(p=>p.n).join(", ")} project${bye.length>1?"":"s"} 0 this week (bye or injury). That hurts the weekly test.`);
+  if(bye.length) N.push(`${bye.map(p=>p.n).join(", ")} ${bye.length>1?"are":"is"} giving Madame nothing this week. Bye or busted. She keeps score.`);
   N.forEach(t=>{const li=document.createElement("li");li.textContent=t;notes.appendChild(li)});
   renderSummary();
 }
@@ -282,7 +287,7 @@ function summaryText(){
     row("Rest of season",ev.ros),
     ok?`QUALIFIES. Mary nets positive on both.`:`DOES NOT QUALIFY.`,
     ``,
-    `${S.lineup?"Scored on Mary's best projected starting lineup. ":""}ESPN PPR projections as of ${new Date(S.data.updated).toLocaleString([],{month:"short",day:"numeric",hour:"numeric",minute:"2-digit"})}`,
+    `${S.lineup?"Scored on Mary's best projected starting lineup, counting free agents she could add. ":""}ESPN PPR projections as of ${new Date(S.data.updated).toLocaleString([],{month:"short",day:"numeric",hour:"numeric",minute:"2-digit"})}`,
     location.href
   ].filter(x=>x!==null).join("\n");
 }
@@ -304,7 +309,7 @@ function readHash(){
 function toast(t){const el=$("#toast");el.textContent=t;el.classList.add("show");setTimeout(()=>el.classList.remove("show"),1800)}
 async function copy(text,msg){try{await navigator.clipboard.writeText(text);toast(msg)}catch{prompt("Copy this:",text)}}
 $("#copy").onclick=async()=>{
-  await copy(summaryText(),"Copied. Go start the 24-hour clock.");
+  await copy(summaryText(),"Copied, darling. Run along to the Commissioner.");
   logProposal();
 };
 /* Each "Copy for the Commissioner" counts as a proposal and goes in the trade log. */
@@ -316,10 +321,10 @@ async function logProposal(){
   const pl=id=>{const p=S.byId.get(id);return {id:p.id,n:p.n,pos:p.pos,tm:p.tm,w:p.w,ros:p.ros,inj:p.inj||""}};
   const ev=evaluate(), dW=ev.w.d, dR=ev.ros.d;
   const entry={wk:S.data.week, by, mode:S.lineup?"lineup":"raw", s:S.gives.map(pl), r:S.gets.map(pl), dW:+dW.toFixed(2), dR:+dR.toFixed(2), ok:dW>0&&dR>0, quip:$("#quip").textContent, asof:S.data.updated};
-  try{ await LOG.post(entry,token,S.pw); try{localStorage.setItem("maryDeskLastLog",JSON.stringify({sig,t:Date.now()}))}catch{} setTimeout(()=>toast("Logged in the trade log. It's on the record now."),1900); }
+  try{ await LOG.post(entry,token,S.pw); try{localStorage.setItem("maryDeskLastLog",JSON.stringify({sig,t:Date.now()}))}catch{} setTimeout(()=>toast("Madame wrote it in her little book. It's on the record now."),1900); }
   catch(e){ console.warn(e); }
 }
-$("#share").onclick=()=>copy(location.href,"Link copied.");
+$("#share").onclick=()=>copy(location.href,"Link copied. Share it with your friends, if you have any.");
 $("#reset").onclick=()=>{S.gives=[];S.gets=[];writeHash();render()};
 window.addEventListener("hashchange",()=>{readHash();render()});
 

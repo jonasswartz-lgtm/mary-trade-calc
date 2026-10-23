@@ -24,7 +24,7 @@ async function decrypt(blob, pw){
 }
 
 /* ---------- gate UI ---------- */
-const WRONG = ["Wrong. Mary would never.","Nope. Are you even in this league?","Incorrect. The lamb is unimpressed.","Denied. Try the one the Commissioner texted you."];
+const WRONG = ["Wrong. Madame doesn't let just anyone in.","Try again, sugar. Slower this time.","No. Are you even a member of this club?","Bad guess. Madame is getting impatient."];
 let wrongCount = 0;
 function injectGate(){
   if($("#gate")) return;
@@ -32,10 +32,10 @@ function injectGate(){
 <div class="gate" id="gate" hidden>
   <form class="gate-card" id="gate-form">
     <div class="gate-sheep">🐑</div>
-    <h2>Members only.</h2>
-    <p>Mary doesn't talk to strangers. Enter the league password.</p>
+    <h2>Password, darling.</h2>
+    <p>This is a speakeasy, not a soup kitchen. Whisper it.</p>
     <input id="gate-pw" type="password" autocomplete="current-password" placeholder="Password" aria-label="League password">
-    <button class="btn primary" type="submit">Let me in</button>
+    <button class="btn primary" type="submit">Knock twice</button>
     <div class="gate-msg" id="gate-msg" aria-live="polite"></div>
   </form>
   <div class="gate-card" id="adam" hidden role="alertdialog" aria-labelledby="adam-q">
@@ -51,7 +51,7 @@ function adamCheck(){
     $("#gate-form").hidden = true;
     const a = $("#adam"); a.hidden = false; a.querySelector("button").focus();
     a.querySelectorAll("button").forEach(b => b.onclick = () => {
-      if(b.dataset.adam){ a.querySelector("p").textContent = "Ugh. Fine. Come in."; a.querySelector(".adam-btns").hidden = true; setTimeout(done, 1400); }
+      if(b.dataset.adam){ a.querySelector("p").textContent = "Ugh. Fine. In you go. Wipe your feet."; a.querySelector(".adam-btns").hidden = true; setTimeout(done, 1400); }
       else done();
     });
   });

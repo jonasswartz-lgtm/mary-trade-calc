@@ -198,11 +198,25 @@ def main():
                 by_id[pid] = row
                 print("added off-list Mary player:", row["n"])
 
-        # Publish only Mary's team; the page is public and other rosters aren't needed.
+        # Free agents: anyone not on a league roster. Mary's baseline lineup may use them,
+        # so a trade only counts for what it adds beyond the waiver wire.
+        rostered = {pid for t in teams for pid in t["roster"]}
+        fas = [p for p in players if p["id"] not in rostered]
+        for p in fas:
+            p["fa"] = 1
+        best = {}
+        for p in fas:
+            if p["ros"] > best.get(p["pos"], (0, ""))[0]:
+                best[p["pos"]] = (p["ros"], p["n"])
+        print("free agents:", len(fas), "| best ROS by pos:",
+              {k: f"{v[1]} {v[0]:.0f}" for k, v in sorted(best.items())})
+
+        # Publish only Mary's team; other rosters stay private (FAs are just flagged).
         out["league"] = {
             "teams": [{"id": mary["id"], "name": mary["name"], "roster": mary["roster"]}] if mary else [],
             "maryTeamId": mary["id"] if mary else None,
             "slots": slots,
+            "faKnown": True,
         }
         print("league teams:", len(teams), "mary team id:", mary and mary["id"])
 
