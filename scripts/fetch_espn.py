@@ -217,6 +217,8 @@ def main():
             "maryTeamId": mary["id"] if mary else None,
             "slots": slots,
             "faKnown": True,
+            # League rosters are visible to every member in ESPN; kept inside the encrypted file only.
+            "rosters": {t["name"]: t["roster"] for t in teams},
         }
         print("league teams:", len(teams), "mary team id:", mary and mary["id"])
 
