@@ -1,0 +1,17 @@
+season 2026 week 7
+players returned: 1054
+ROS check on 40 players: full-style err 4582, remaining-style err 679 -> season_as_is
+   Jahmyr Gibbs season 312.56 actual 153.7 wk 26.0
+   Jaxon Smith-Njigba season 226.95 actual 164.86 wk 20.03
+   Amon-Ra St. Brown season 235.83 actual 104.2 wk 19.5
+   Christian McCaffrey season 223.02 actual 122.0 wk 21.92
+   Bijan Robinson season 225.06 actual 128.5 wk 21.14
+   CeeDee Lamb season 208.02 actual 131.1 wk 18.43
+   Ja'Marr Chase season 264.57 actual 79.9 wk 22.1
+   Jonathan Taylor season 196.23 actual 118.5 wk 15.23
+lineup slots: {'0': 1, '2': 2, '4': 2, '6': 1, '7': 1, '16': 1, '17': 1}
+free agents: 559 | best ROS by pos: {'D/ST': '49ers D/ST 80', 'K': 'Harrison Butker 131', 'QB': 'J.J. McCarthy 193', 'RB': 'Ollie Gordon II 149', 'TE': 'T.J. Hockenson 127', 'WR': 'Rashee Rice 156'}
+league teams: 8 mary team id: 8
+wrote 668 players
+trade log token: present
+encrypted 88132 bytes
