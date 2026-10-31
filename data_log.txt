@@ -1,0 +1,17 @@
+season 2026 week 8
+players returned: 1055
+ROS check on 40 players: full-style err 4989, remaining-style err 736 -> season_as_is
+   Jahmyr Gibbs season 291.51 actual 171.0 wk 24.59
+   Jaxon Smith-Njigba season 211.91 actual 196.16 wk 21.81
+   Amon-Ra St. Brown season 217.69 actual 128.4 wk 17.8
+   CeeDee Lamb season 193.67 actual 155.5 wk 20.06
+   Ja'Marr Chase season 233.64 actual 97.1 wk 21.89
+   Josh Allen season 248.94 actual 161.26 wk 23.7
+   Puka Nacua season 224.97 actual 113.6 wk 22.42
+   Bijan Robinson season 204.02 actual 145.7 wk 20.28
+lineup slots: {'0': 1, '2': 2, '4': 2, '6': 1, '7': 1, '16': 1, '17': 1}
+free agents: 562 | best ROS by pos: {'D/ST': 'Broncos D/ST 72', 'K': 'Tyler Bass 111', 'QB': 'Malik Willis 178', 'RB': 'Tony Pollard 147', 'TE': 'Brenton Strange 111', 'WR': 'Stefon Diggs 139'}
+league teams: 8 mary team id: 8
+wrote 672 players
+trade log token: present
+encrypted 88670 bytes
