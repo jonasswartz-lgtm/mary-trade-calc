@@ -1,0 +1,17 @@
+season 2026 week 9
+players returned: 1056
+ROS check on 40 players: full-style err 5634, remaining-style err 604 -> season_as_is
+   Jahmyr Gibbs season 247.13 actual 195.8 wk 26.54
+   Puka Nacua season 209.35 actual 138.6 wk 24.19
+   Jaxon Smith-Njigba season 195.52 actual 219.96 wk 22.1
+   Amon-Ra St. Brown season 191.99 actual 141.0 wk 20.6
+   CeeDee Lamb season 181.22 actual 168.3 wk 20.58
+   Ja'Marr Chase season 227.06 actual 128.2 wk 22.87
+   Josh Allen season 234.46 actual 187.82 wk 19.94
+   Christian McCaffrey season 198.06 actual 144.0 wk 21.97
+lineup slots: {'0': 1, '2': 2, '4': 2, '6': 1, '7': 1, '16': 1, '17': 1}
+free agents: 570 | best ROS by pos: {'D/ST': 'Buccaneers D/ST 63', 'K': 'Dominic Zvada 106', 'QB': 'J.J. McCarthy 171', 'RB': 'Tony Pollard 145', 'TE': 'Brenton Strange 97', 'WR': 'Michael Wilson 133'}
+league teams: 8 mary team id: 8
+wrote 680 players
+trade log token: present
+encrypted 89636 bytes
