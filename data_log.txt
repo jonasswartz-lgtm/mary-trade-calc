@@ -1,0 +1,17 @@
+season 2026 week 10
+players returned: 1061
+ROS check on 40 players: full-style err 6169, remaining-style err 511 -> season_as_is
+   Jahmyr Gibbs season 209.46 actual 209.2 wk 23.86
+   Jaxon Smith-Njigba season 165.31 actual 232.06 wk 22.3
+   Amon-Ra St. Brown season 169.43 actual 157.6 wk 20.35
+   CeeDee Lamb season 162.65 actual 201.8 wk 20.84
+   Christian McCaffrey season 179.12 actual 166.7 wk 21.75
+   Ja'Marr Chase season 213.03 actual 159.7 wk 22.92
+   Josh Allen season 202.4 actual 200.68 wk 24.31
+   Bijan Robinson season 162.26 actual 180.0 wk 18.63
+lineup slots: {'0': 1, '2': 2, '4': 2, '6': 1, '7': 1, '16': 1, '17': 1}
+free agents: 579 | best ROS by pos: {'D/ST': 'Buccaneers D/ST 57', 'K': 'Chris Boswell 98', 'QB': 'J.J. McCarthy 135', 'RB': 'Tony Pollard 139', 'TE': 'T.J. Hockenson 98', 'WR': 'Stefon Diggs 102'}
+league teams: 8 mary team id: 8
+wrote 689 players
+trade log token: present
+encrypted 90740 bytes
