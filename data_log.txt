@@ -1,0 +1,17 @@
+season 2026 week 11
+players returned: 1061
+ROS check on 40 players: full-style err 6351, remaining-style err 424 -> season_as_is
+   Jahmyr Gibbs season 194.76 actual 253.4 wk 21.94
+   Ja'Marr Chase season 199.55 actual 193.8 wk 25.41
+   Josh Allen season 177.85 actual 223.02 wk 23.38
+   Amon-Ra St. Brown season 152.8 actual 183.4 wk 17.7
+   CeeDee Lamb season 142.21 actual 222.0 wk 22.46
+   Christian McCaffrey season 161.43 actual 213.0 wk 19.81
+   James Cook III season 154.9 actual 170.1 wk 20.88
+   Brock Bowers season 110.12 actual 149.8 wk 15.34
+lineup slots: {'0': 1, '2': 2, '4': 2, '6': 1, '7': 1, '16': 1, '17': 1}
+free agents: 585 | best ROS by pos: {'D/ST': '49ers D/ST 59', 'K': 'Cam Little 89', 'QB': 'J.J. McCarthy 121', 'RB': 'Cam Skattebo 128', 'TE': 'Dalton Schultz 69', 'WR': 'Jaylen Waddle 92'}
+league teams: 8 mary team id: 8
+wrote 694 players
+trade log token: present
+encrypted 91371 bytes
