@@ -1,0 +1,17 @@
+season 2026 week 12
+players returned: 1063
+ROS check on 40 players: full-style err 7440, remaining-style err 435 -> season_as_is
+   Jahmyr Gibbs season 181.91 actual 329.4 wk 25.61
+   Amon-Ra St. Brown season 126.46 actual 219.7 wk 17.77
+   CeeDee Lamb season 121.18 actual 272.6 wk 20.34
+   Christian McCaffrey season 138.61 actual 227.2 wk 18.52
+   Ja'Marr Chase season 170.53 actual 201.9 wk 25.05
+   Jaxon Smith-Njigba season 148.53 actual 263.16 wk 21.6
+   Josh Allen season 146.44 actual 238.72 wk 18.06
+   James Cook III season 122.83 actual 206.8 wk 14.18
+lineup slots: {'0': 1, '2': 2, '4': 2, '6': 1, '7': 1, '16': 1, '17': 1}
+free agents: 595 | best ROS by pos: {'D/ST': 'Seahawks D/ST 54', 'K': 'Dominic Zvada 73', 'QB': 'Bryce Young 108', 'RB': 'Zach Charbonnet 92', 'TE': 'Tucker Kraft 68', 'WR': 'Garrett Wilson 85'}
+league teams: 8 mary team id: 8
+wrote 704 players
+trade log token: present
+encrypted 92680 bytes
